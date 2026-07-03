@@ -936,22 +936,25 @@ function CameraController({
   useFrame((state, delta) => {
     const camera = state.camera;
     const shake = shakeRef.current;
+    const isMobileView =
+      state.size.width <= 768 || state.size.width / state.size.height < 0.85;
+    const mobileDistance = isMobileView ? 4.5 : 0;
 
     // Cinematic base coordinates
     let targetX = 0;
     let targetY = 3.2;
-    let targetZ = 28;
+    let targetZ = 28 + mobileDistance;
 
     if (phase === 'shooting') {
       // Dynamic zoom and pan to follow the ball
       targetX = ballTarget.x * 0.15;
       targetY = 2.8 + ballTarget.y * 0.12;
-      targetZ = 26;
+      targetZ = 26 + mobileDistance;
     } else if (phase === 'result_goal' || phase === 'result_save' || phase === 'result_miss') {
       // Zoom close to celebration/save area
       targetX = ballTarget.x * 0.2;
       targetY = 2.6;
-      targetZ = 22;
+      targetZ = 22 + mobileDistance;
     }
 
     // Smooth camera interpolation
