@@ -1,64 +1,145 @@
-import Image from "next/image";
+"use client";
+import dynamic from "next/dynamic";
+import React, { useState } from "react";
+import { AppScreen, Player } from "./types";
+import RegistrationScreen from "./components/RegistrationScreen";
+import CoachTipsScreen from "./components/HowToPlay";
+import LeaderboardScreen from "./components/GameOver";
 
-export default function Home() {
+import 'material-symbols/outlined.css';
+
+// The 3D game pulls in Three.js, Rapier, and several large model helpers.
+// Keep those out of the registration bundle so its form hydrates immediately.
+const PenaltyGame3D = dynamic(() => import("./components/PenaltyGame"), {
+  ssr: false,
+  loading: () => (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#040409] font-headline-lg-mobile text-2xl uppercase text-white">
+      Loading game…
+    </div>
+  ),
+});
+
+export default function App() {
+  const [screen, setScreen] = useState<AppScreen>(AppScreen.REGISTRATION);
+  const [player, setPlayer] = useState<Player>({
+    name: "",
+    phone: "",
+    points: 0,
+    rank: 0,
+    credits: 0,
+  });
+
+  const handleRegister = (name: string, phone: string) => {
+    setPlayer((prev) => ({
+      ...prev,
+      name,
+      phone,
+    }));
+    setScreen(AppScreen.COACH_TIPS);
+
+    // Use the tips screen as useful loading time for the large 3D assets.
+    void import("./components/PenaltyGame").then(({ preloadPenaltyGameAssets }) => {
+      preloadPenaltyGameAssets();
+    });
+  };
+
+  const handleGameFinished = (pointsWon: number) => {
+    setPlayer((prev) => ({
+      ...prev,
+      points: prev.points + pointsWon,
+    }));
+    setScreen(AppScreen.LEADERBOARD);
+  };
+
+  const handleReset = () => {
+    setPlayer({
+      name: "",
+      phone: "",
+      points: 0,
+      rank: 0,
+      credits: 0,
+    });
+    setScreen(AppScreen.REGISTRATION);
+  };
+
+  // Determine background based on screen matching the high-fidelity mockups
+  const getBackgroundStyle = () => {
+    if (screen === AppScreen.REGISTRATION) {
+      return {
+        backgroundColor: "#ffdcc4",
+      };
+    }
+    if (screen === AppScreen.GAMEPLAY) {
+      return {
+        backgroundColor: "#040409",
+      };
+    }
+    // Leaderboard, Tips:
+    return {
+      backgroundImage: `
+        radial-gradient(circle at 20% 20%, rgba(255,138,0,0.18) 0%, transparent 40%),
+        radial-gradient(circle at 80% 80%, rgba(120,252,77,0.18) 0%, transparent 40%)
+      `,
+      backgroundColor: "#fcf9f8",
+    };
+  };
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
+    <div
+      className="min-h-screen flex flex-col relative overflow-x-hidden selection:bg-secondary-container selection:text-on-secondary-container transition-all duration-500"
+      style={getBackgroundStyle()}
+    >
+      {/* Decorative Background Elements on Game screen */}
+      {screen === AppScreen.GAMEPLAY && (
+        <div
+          className="absolute inset-0 opacity-15 pointer-events-none z-0"
+          style={{
+            backgroundImage: "radial-gradient(#1c1b1b 2px, transparent 2px)",
+            backgroundSize: "32px 32px",
+          }}
+        ></div>
+      )}
+
+      {/* Floating background aesthetic elements for other screens */}
+      {screen !== AppScreen.REGISTRATION && screen !== AppScreen.GAMEPLAY && (
+        <>
+          <div className="fixed top-20 left-10 opacity-5 pointer-events-none z-0 animate-bounce">
+            <span className="material-symbols-outlined text-[120px] select-none">sports_soccer</span>
+          </div>
+          <div className="fixed bottom-40 right-10 opacity-5 pointer-events-none z-0 animate-pulse">
+            <span className="material-symbols-outlined text-[100px] select-none">local_drink</span>
+          </div>
+        </>
+      )}
+
+      {/* Main Content Area */}
+      <main className="flex-grow flex flex-col items-center justify-center relative z-10 p-4">
+        {screen === AppScreen.REGISTRATION && (
+          <RegistrationScreen
+            onRegister={handleRegister}
+          />
+        )}
+
+        {screen === AppScreen.COACH_TIPS && (
+          <CoachTipsScreen
+            playerName={player.name}
+            onPlay={() => setScreen(AppScreen.GAMEPLAY)}
+          />
+        )}
+
+        {screen === AppScreen.GAMEPLAY && (
+          <PenaltyGame3D
+            onGameFinished={handleGameFinished}
+          />
+        )}
+
+        {screen === AppScreen.LEADERBOARD && (
+          <LeaderboardScreen
+            userName={player.name}
+            userPoints={player.points}
+            onPlayAgain={() => setScreen(AppScreen.GAMEPLAY)}
+          />
+        )}
       </main>
     </div>
   );
