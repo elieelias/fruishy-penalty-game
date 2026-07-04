@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useSyncExternalStore } from "react";
+import React, { useState } from "react";
 
 import 'material-symbols/outlined.css';
 
@@ -8,24 +8,14 @@ interface RegistrationScreenProps {
     onRegister: (name: string, phone: string) => void;
 }
 
-const subscribeToHydration = () => () => {};
-const getClientSnapshot = () => true;
-const getServerSnapshot = () => false;
-
 export default function RegistrationScreen({
     onRegister,
 }: RegistrationScreenProps) {
     const [name, setName] = useState("");
     const [phone, setPhone] = useState("");
     const [errorMsg, setErrorMsg] = useState("");
-    const isInteractive = useSyncExternalStore(
-        subscribeToHydration,
-        getClientSnapshot,
-        getServerSnapshot
-    );
 
     const handleSubmit = () => {
-        if (!isInteractive) return;
         if (!name.trim()) {
             setErrorMsg("Please enter your striker name!");
             return;
@@ -62,13 +52,11 @@ export default function RegistrationScreen({
                     JOIN THE GAME
                 </h3>
 
-                <div
+                <form
                     className="flex flex-col gap-3.5 w-full"
-                    onKeyDown={(event) => {
-                        if (event.key === "Enter") {
-                            event.preventDefault();
-                            handleSubmit();
-                        }
+                    onSubmit={(event) => {
+                        event.preventDefault();
+                        handleSubmit();
                     }}
                 >
                     {errorMsg && (
@@ -119,17 +107,15 @@ export default function RegistrationScreen({
 
                     <button
                         className="mt-2 w-full bg-primary-container text-on-primary-container font-headline-lg-mobile text-xl uppercase rounded-xl py-3.5 sticker-border hard-shadow hover:bg-primary-fixed hover:translate-y-0.5 hover:shadow-[2px_2px_0_0_#1c1b1b] transition-all active:translate-y-1 active:shadow-none relative overflow-hidden group cursor-pointer"
-                        type="button"
-                        onClick={handleSubmit}
-                        disabled={!isInteractive}
+                        type="submit"
                     >
                         <span className="relative z-10 flex items-center justify-center gap-2">
-                            {isInteractive ? "START GAME" : "LOADING…"}{" "}
+                            START GAME{" "}
                             <span className="material-symbols-outlined select-none text-xl">sports_score</span>
                         </span>
                         <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
                     </button>
-                </div>
+                </form>
             </div>
         </div>
     );

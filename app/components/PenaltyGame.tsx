@@ -4,7 +4,6 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 type LaneKind = 'grass' | 'road' | 'river' | 'rail';
 type PowerUpType = 'double' | 'ghost' | 'slow';
-type Facing = 'up' | 'down' | 'left' | 'right';
 type Particle = {
   x: number;
   y: number;
@@ -21,7 +20,7 @@ type Lane = {
   kind: LaneKind;
   direction: 1 | -1;
   speed: number;
-  cars: Array<{ x: number; color: string; width: number }>;
+  cars: Array<{ x: number; visualX: number; color: string; width: number }>;
   trees: number[];
   powerUp: { x: number; type: PowerUpType } | null;
   warningPlayed: boolean;
@@ -54,8 +53,6 @@ export default function ChickenRoadGame({
     slow: 0,
   });
   const [combo, setCombo] = useState(0);
-  const [gameMessage, setGameMessage] = useState('');
-  const messageTimerRef = useRef<number | null>(null);
   const nearMissCooldownRef = useRef(0);
   const activePowerUpsRef = useRef<PowerUpType[]>([]);
   const mutedRef = useRef(false);
@@ -91,13 +88,14 @@ export default function ChickenRoadGame({
     playerY: 0,
     targetX: 0,
     targetY: 0,
+    cameraY: 0,
+    targetCameraY: 0,
     hop: 0,
     nextLaneId: 0,
     currentStep: 0,
     maxStep: 0,
     lastForwardAt: 0,
     combo: 0,
-    facing: 'up' as Facing,
     particles: [] as Particle[],
     shake: 0,
   });
@@ -105,16 +103,6 @@ export default function ChickenRoadGame({
   useEffect(() => {
     gameFinishedRef.current = onGameFinished;
   }, [onGameFinished]);
-
-  const showMessage = useCallback((message: string, duration = 700) => {
-    setGameMessage(message);
-    if (messageTimerRef.current !== null) {
-      window.clearTimeout(messageTimerRef.current);
-    }
-    messageTimerRef.current = window.setTimeout(() => {
-      setGameMessage('');
-    }, duration);
-  }, []);
 
   const getAudioContext = useCallback(() => {
     if (!audioContextRef.current) {
@@ -248,9 +236,6 @@ export default function ChickenRoadGame({
       if (musicTimerRef.current !== null) {
         window.clearInterval(musicTimerRef.current);
       }
-      if (messageTimerRef.current !== null) {
-        window.clearTimeout(messageTimerRef.current);
-      }
       void audioContextRef.current?.close();
     };
   }, []);
@@ -311,16 +296,21 @@ export default function ChickenRoadGame({
           ? 1 + Math.floor(Math.random() * 3)
           : carCount;
     const cars = kind !== 'grass'
-      ? Array.from({ length: moverCount }, (_, index) => ({
-          x: ((index + Math.random() * 0.45) * 300) % (width + 220) - 110,
-          color: CAR_COLORS[(id + index) % CAR_COLORS.length],
-          width:
-            kind === 'rail'
-              ? 250
-              : kind === 'river'
-                ? 105 + Math.floor(Math.random() * 90)
-                : 66 + ((id + index) % 3) * 12,
-        }))
+      ? Array.from({ length: moverCount }, (_, index) => {
+          const x =
+            ((index + Math.random() * 0.45) * 300) % (width + 220) - 110;
+          return {
+            x,
+            visualX: x,
+            color: CAR_COLORS[(id + index) % CAR_COLORS.length],
+            width:
+              kind === 'rail'
+                ? 250
+                : kind === 'river'
+                  ? 105 + Math.floor(Math.random() * 90)
+                  : 66 + ((id + index) % 3) * 12,
+          };
+        })
       : [];
     const treeCount =
       kind === 'grass'
@@ -386,12 +376,13 @@ export default function ChickenRoadGame({
     state.targetX = state.playerX;
     state.playerY = height - LANE_HEIGHT * 0.5;
     state.targetY = state.playerY;
+    state.cameraY = 0;
+    state.targetCameraY = 0;
     state.hop = 0;
     state.currentStep = 0;
     state.maxStep = 0;
     state.lastForwardAt = 0;
     state.combo = 0;
-    state.facing = 'up';
     state.particles = [];
     state.shake = 0;
     sectionRef.current = {
@@ -433,21 +424,18 @@ export default function ChickenRoadGame({
       if (hasTreeAt(nextX, state.targetY)) return;
       state.playerColumn = nextColumn;
       state.targetX = nextX;
-      state.facing = 'left';
     } else if (direction === 'right') {
       const nextColumn = Math.min(COLUMN_COUNT - 1, state.playerColumn + 1);
       const nextX = columnX(nextColumn, state.width);
       if (hasTreeAt(nextX, state.targetY)) return;
       state.playerColumn = nextColumn;
       state.targetX = nextX;
-      state.facing = 'right';
     } else if (direction === 'backward') {
       if (state.targetY < state.height - LANE_HEIGHT * 0.55) {
         if (hasTreeAt(state.targetX, state.targetY + LANE_HEIGHT)) return;
         state.currentStep = Math.max(0, state.currentStep - 1);
         state.targetY += LANE_HEIGHT;
         state.hop = 1;
-        state.facing = 'down';
         state.combo = 0;
         setCombo(0);
         playHop(false);
@@ -467,13 +455,9 @@ export default function ChickenRoadGame({
         const speedBonus = Math.max(0, Math.round((1.4 - hopGap) * 45));
         bonusScoreRef.current += speedBonus + Math.min(50, state.combo * 4);
         setCombo(state.combo);
-        if (state.maxStep % 10 === 0) {
-          showMessage(`${state.maxStep} LANES!`, 900);
-        }
       }
       state.targetY -= LANE_HEIGHT;
       state.hop = 1;
-      state.facing = 'up';
       for (let index = 0; index < 5; index += 1) {
         state.particles.push({
           x: state.playerX,
@@ -486,20 +470,16 @@ export default function ChickenRoadGame({
         });
       }
 
-      if (state.targetY < state.height * 0.38) {
-        state.lanes = state.lanes.map((lane) => ({
-          ...lane,
-          y: lane.y + LANE_HEIGHT,
-        }));
-        state.targetY += LANE_HEIGHT;
-
+      if (state.targetY + state.targetCameraY < state.height * 0.38) {
+        state.targetCameraY += LANE_HEIGHT;
         const topY = Math.min(...state.lanes.map((lane) => lane.y));
         state.lanes.push(
           makeLane(state.nextLaneId, topY - LANE_HEIGHT, state.width)
         );
         state.nextLaneId += 1;
         state.lanes = state.lanes.filter(
-          (lane) => lane.y < state.height + LANE_HEIGHT
+          (lane) =>
+            lane.y + state.targetCameraY < state.height + LANE_HEIGHT
         );
       }
 
@@ -512,7 +492,7 @@ export default function ChickenRoadGame({
       }, null);
       playHop(landingLane?.kind === 'grass');
     }
-  }, [columnX, makeLane, playHop, showMessage, startMusic]);
+  }, [columnX, makeLane, playHop, startMusic]);
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -609,10 +589,6 @@ export default function ChickenRoadGame({
           size: 3 + Math.random() * 5,
         });
       }
-      showMessage(
-        type === 'double' ? '2× SCORE!' : type === 'ghost' ? 'GHOST MODE!' : 'SLOW TRAFFIC!',
-        850
-      );
     };
 
     const render = (time: number) => {
@@ -620,8 +596,12 @@ export default function ChickenRoadGame({
       previousTime = time;
       const state = game.current;
 
-      state.playerX += (state.targetX - state.playerX) * Math.min(1, dt * 16);
-      state.playerY += (state.targetY - state.playerY) * Math.min(1, dt * 16);
+      const movementEase = 1 - Math.exp(-14 * dt);
+      const cameraEase = 1 - Math.exp(-9 * dt);
+      state.playerX += (state.targetX - state.playerX) * movementEase;
+      state.playerY += (state.targetY - state.playerY) * movementEase;
+      state.cameraY +=
+        (state.targetCameraY - state.cameraY) * cameraEase;
       state.hop = Math.max(0, state.hop - dt * 4.6);
 
       if (!deadRef.current && startedAtRef.current > 0) {
@@ -700,6 +680,7 @@ export default function ChickenRoadGame({
         );
         state.shake *= Math.max(0, 1 - dt * 8);
       }
+      context.translate(0, state.cameraY);
 
       for (const lane of state.lanes) {
         if (lane.kind === 'road') {
@@ -835,12 +816,18 @@ export default function ChickenRoadGame({
               lane.speed * trafficSpeedMultiplier * lane.direction * dt;
             if (lane.direction > 0 && car.x > state.width + 100) {
               car.x = -car.width - 120;
+              car.visualX = car.x;
               lane.warningPlayed = false;
             }
             if (lane.direction < 0 && car.x < -car.width - 120) {
               car.x = state.width + 100;
+              car.visualX = car.x;
               lane.warningPlayed = false;
             }
+            const vehicleEase =
+              1 - Math.exp(-24 * Math.min(dt, 1 / 60));
+            car.visualX += (car.x - car.visualX) * vehicleEase;
+            const carX = car.visualX;
             if (lane.kind === 'rail' && !lane.warningPlayed) {
               const approaching =
                 lane.direction > 0
@@ -855,20 +842,20 @@ export default function ChickenRoadGame({
             const carY = lane.y - 23;
             if (lane.kind === 'river') {
               context.fillStyle = 'rgba(0,0,0,0.18)';
-              roundedRect(car.x + 3, carY + 7, car.width, 38, 9);
+              roundedRect(carX + 3, carY + 7, car.width, 38, 9);
               context.fill();
               context.fillStyle = '#8b572f';
-              roundedRect(car.x, carY + 2, car.width, 34, 10);
+              roundedRect(carX, carY + 2, car.width, 34, 10);
               context.fill();
               context.fillStyle = '#b7793f';
-              for (let ringX = car.x + 18; ringX < car.x + car.width; ringX += 38) {
+              for (let ringX = carX + 18; ringX < carX + car.width; ringX += 38) {
                 context.fillRect(ringX, carY + 5, 4, 28);
               }
 
               const onThisLane = Math.abs(state.playerY - lane.y) < 17;
               const onThisLog =
-                state.playerX > car.x - 10 &&
-                state.playerX < car.x + car.width + 10;
+                state.playerX > carX - 10 &&
+                state.playerX < carX + car.width + 10;
               if (onThisLane && onThisLog && !supportedByLog) {
                 supportedByLog = true;
                 const carriedDistance =
@@ -887,8 +874,8 @@ export default function ChickenRoadGame({
 
             context.save();
             const vehicleBob =
-              lane.kind === 'rail' ? 0 : Math.sin(time * 0.008 + car.x) * 1.5;
-            context.translate(car.x + car.width / 2, lane.y + vehicleBob);
+              lane.kind === 'rail' ? 0 : Math.sin(time * 0.008 + carX) * 1.5;
+            context.translate(carX + car.width / 2, lane.y + vehicleBob);
             context.scale(lane.direction, 1);
 
             context.fillStyle = 'rgba(20,25,35,0.28)';
@@ -955,8 +942,8 @@ export default function ChickenRoadGame({
             const playerHalf = 17;
             const colliding =
               !ghostActive &&
-              state.playerX + playerHalf > car.x &&
-              state.playerX - playerHalf < car.x + car.width &&
+              state.playerX + playerHalf > carX &&
+              state.playerX - playerHalf < carX + car.width &&
               state.playerY + playerHalf > carY &&
               state.playerY - playerHalf < carY + 44;
             if (colliding) {
@@ -967,13 +954,12 @@ export default function ChickenRoadGame({
               time > nearMissCooldownRef.current
             ) {
               const horizontalGap =
-                state.playerX < car.x
-                  ? car.x - (state.playerX + playerHalf)
-                  : state.playerX - playerHalf - (car.x + car.width);
+                state.playerX < carX
+                  ? carX - (state.playerX + playerHalf)
+                  : state.playerX - playerHalf - (carX + car.width);
               if (horizontalGap >= 0 && horizontalGap < 13) {
                 nearMissCooldownRef.current = time + 1200;
                 bonusScoreRef.current += 25;
-                showMessage('CLOSE! +25', 650);
               }
             }
           }
@@ -993,36 +979,34 @@ export default function ChickenRoadGame({
       context.save();
       if (ghostActive) context.globalAlpha = 0.42;
       context.translate(state.playerX, state.playerY - hopY);
-      const facingRotation: Record<Facing, number> = {
-        right: 0,
-        down: Math.PI / 2,
-        left: Math.PI,
-        up: -Math.PI / 2,
-      };
-      context.rotate(
-        deadRef.current ? Math.PI / 2 : facingRotation[state.facing]
-      );
+      if (deadRef.current) context.rotate(Math.PI / 2);
 
       context.fillStyle = 'rgba(0,0,0,0.2)';
       context.beginPath();
-      context.ellipse(2, 22 + hopY, 22, 8, 0, 0, Math.PI * 2);
+      context.ellipse(0, 22 + hopY, 22, 8, 0, 0, Math.PI * 2);
       context.fill();
       context.fillStyle = '#f4f1df';
-      context.fillRect(-16, -5, 32, 31);
+      context.fillRect(-16, -3, 32, 29);
       context.fillStyle = '#ffffff';
-      context.fillRect(-13, -24, 27, 24);
+      context.fillRect(-14, -27, 28, 25);
       context.fillStyle = '#e7e1c9';
       context.fillRect(-16, 19, 32, 7);
       context.fillStyle = '#ef4444';
-      context.fillRect(-9, -31, 7, 8);
-      context.fillRect(0, -34, 7, 11);
+      context.fillRect(-8, -34, 7, 9);
+      context.fillRect(1, -37, 7, 12);
       context.fillStyle = '#f59e0b';
-      context.fillRect(14, -18, 13, 9);
+      context.beginPath();
+      context.moveTo(-7, -27);
+      context.lineTo(7, -27);
+      context.lineTo(0, -39);
+      context.closePath();
+      context.fill();
       context.fillStyle = '#111827';
-      context.fillRect(7, -19, 4, 4);
+      context.fillRect(-9, -21, 4, 4);
+      context.fillRect(5, -21, 4, 4);
       context.fillStyle = '#e59a21';
-      context.fillRect(-12, 26, 5, 8);
-      context.fillRect(7, 26, 5, 8);
+      context.fillRect(-11, 26, 5, 8);
+      context.fillRect(6, 26, 5, 8);
       context.restore();
 
       state.particles = state.particles.filter((particle) => {
@@ -1055,7 +1039,7 @@ export default function ChickenRoadGame({
       cancelAnimationFrame(animationFrame);
       window.removeEventListener('resize', resize);
     };
-  }, [initialiseGame, playAlert, playCrash, showMessage]);
+  }, [initialiseGame, playAlert, playCrash]);
 
   const onPointerDown = (event: React.PointerEvent) => {
     pointerStart.current = { x: event.clientX, y: event.clientY };
@@ -1139,18 +1123,6 @@ export default function ChickenRoadGame({
       {combo >= 2 && !dead && (
         <div className="pointer-events-none absolute left-5 top-6 z-10 -rotate-3 rounded-xl border-2 border-white bg-orange-500 px-3 py-2 text-lg font-black text-white shadow-lg">
           {combo}× COMBO
-        </div>
-      )}
-
-      {gameMessage && !dead && (
-        <div className="pointer-events-none absolute left-1/2 top-[38%] z-20 -translate-x-1/2 -rotate-2 whitespace-nowrap rounded-xl border-4 border-white bg-yellow-400 px-6 py-3 text-3xl font-black italic text-[#17202a] shadow-2xl">
-          {gameMessage}
-        </div>
-      )}
-
-      {lanesPassed === 0 && !dead && (
-        <div className="pointer-events-none absolute bottom-7 left-1/2 w-max max-w-[90vw] -translate-x-1/2 rounded-full bg-black/65 px-5 py-3 text-center text-xs font-black uppercase tracking-wider text-white backdrop-blur">
-          Tap to hop forward · Swipe left, right, or down
         </div>
       )}
 
