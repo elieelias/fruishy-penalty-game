@@ -1,23 +1,8 @@
 import "./globals.css";
-import { Anybody, Plus_Jakarta_Sans, Space_Grotesk } from "next/font/google";
-
-const anybody = Anybody({
-  weight: ["800", "900"],
-  subsets: ["latin"],
-  variable: "--font-anybody",
-});
-
-const jakarta = Plus_Jakarta_Sans({
-  weight: ["500"],
-  subsets: ["latin"],
-  variable: "--font-jakarta",
-});
-
-const space = Space_Grotesk({
-  weight: ["700"],
-  subsets: ["latin"],
-  variable: "--font-space",
-});
+import "@fontsource/anybody/800.css";
+import "@fontsource/anybody/900.css";
+import "@fontsource/plus-jakarta-sans/500.css";
+import "@fontsource/space-grotesk/700.css";
 
 export default function RootLayout({
   children,
@@ -26,11 +11,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body
-        className={`${anybody.variable} ${jakarta.variable} ${space.variable}`}
-      >
-        {children}
-      </body>
+      <body>{children}</body>
     </html>
   );
 }

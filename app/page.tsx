@@ -1,23 +1,12 @@
 "use client";
-import dynamic from "next/dynamic";
 import React, { useState } from "react";
 import { AppScreen, Player } from "./types";
 import RegistrationScreen from "./components/RegistrationScreen";
 import CoachTipsScreen from "./components/HowToPlay";
 import LeaderboardScreen from "./components/GameOver";
+import ChickenRoadGame from "./components/PenaltyGame";
 
 import 'material-symbols/outlined.css';
-
-// The 3D game pulls in Three.js, Rapier, and several large model helpers.
-// Keep those out of the registration bundle so its form hydrates immediately.
-const PenaltyGame3D = dynamic(() => import("./components/PenaltyGame"), {
-  ssr: false,
-  loading: () => (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#040409] font-headline-lg-mobile text-2xl uppercase text-white">
-      Loading game…
-    </div>
-  ),
-});
 
 export default function App() {
   const [screen, setScreen] = useState<AppScreen>(AppScreen.REGISTRATION);
@@ -36,11 +25,6 @@ export default function App() {
       phone,
     }));
     setScreen(AppScreen.COACH_TIPS);
-
-    // Use the tips screen as useful loading time for the large 3D assets.
-    void import("./components/PenaltyGame").then(({ preloadPenaltyGameAssets }) => {
-      preloadPenaltyGameAssets();
-    });
   };
 
   const handleGameFinished = (pointsWon: number) => {
@@ -49,17 +33,6 @@ export default function App() {
       points: prev.points + pointsWon,
     }));
     setScreen(AppScreen.LEADERBOARD);
-  };
-
-  const handleReset = () => {
-    setPlayer({
-      name: "",
-      phone: "",
-      points: 0,
-      rank: 0,
-      credits: 0,
-    });
-    setScreen(AppScreen.REGISTRATION);
   };
 
   // Determine background based on screen matching the high-fidelity mockups
@@ -128,7 +101,7 @@ export default function App() {
         )}
 
         {screen === AppScreen.GAMEPLAY && (
-          <PenaltyGame3D
+          <ChickenRoadGame
             onGameFinished={handleGameFinished}
           />
         )}
@@ -137,7 +110,6 @@ export default function App() {
           <LeaderboardScreen
             userName={player.name}
             userPoints={player.points}
-            onPlayAgain={() => setScreen(AppScreen.GAMEPLAY)}
           />
         )}
       </main>

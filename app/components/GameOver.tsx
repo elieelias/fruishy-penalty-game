@@ -1,21 +1,18 @@
 'use client'
 
-import React, { useState, useMemo } from "react";
+import React, { useMemo } from "react";
 import { getLeaderboard } from "../data/leaderboard";
-import { LeaderboardEntry } from "../types";
 
 interface LeaderboardScreenProps {
     userPoints: number;
     userName: string;
-    onPlayAgain: () => void;
 }
 
 export default function LeaderboardScreen({
     userPoints,
     userName,
-    onPlayAgain,
 }: LeaderboardScreenProps) {
-    const [visibleCount, setVisibleCount] = useState(7);
+    const visibleCount = 7;
 
     // Generate dynamic leaderboard based on current player points
     const leaderboard = useMemo(() => {
@@ -27,10 +24,6 @@ export default function LeaderboardScreen({
         const found = leaderboard.find((item) => item.isCurrentUser);
         return found ? found.rank : 42;
     }, [leaderboard]);
-
-    const handleLoadMore = () => {
-        setVisibleCount((prev) => Math.min(prev + 4, leaderboard.length));
-    };
 
     return (
         <div className="pt-8 pb-32 px-4 max-w-2xl mx-auto space-y-8 w-full relative z-10">
@@ -52,7 +45,7 @@ export default function LeaderboardScreen({
             <section className="space-y-4">
                 <div className="flex items-center justify-between px-2">
                     <h3 className="font-headline-lg-mobile text-xl md:text-2xl text-on-surface uppercase italic font-black">
-                        Top Goal Scorers
+                        Top Road Crossers
                     </h3>
                     <span className="font-label-bold text-xs text-outline uppercase tracking-wider">
                         Live standings
@@ -61,8 +54,6 @@ export default function LeaderboardScreen({
 
                 <div className="space-y-3.5">
                     {leaderboard.slice(0, visibleCount).map((entry, index) => {
-                        const isTop3 = entry.rank <= 3 && !entry.isCurrentUser;
-
                         // Background classes for 1st, 2nd, 3rd, and normal rows
                         let rowBgClass = "bg-surface";
                         let rankBadgeBg = "bg-on-surface text-outline";
