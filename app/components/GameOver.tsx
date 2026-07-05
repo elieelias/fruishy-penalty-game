@@ -94,11 +94,6 @@ export default function LeaderboardScreen({
                                             </span>
                                         )}
                                     </p>
-                                    {entry.badge && (
-                                        <p className="font-label-bold text-[10px] text-primary uppercase mt-0.5 tracking-wider font-bold">
-                                            🏆 {entry.badge}
-                                        </p>
-                                    )}
                                 </div>
 
                                 {/* Score */}

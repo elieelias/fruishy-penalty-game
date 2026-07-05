@@ -14,13 +14,22 @@ type Particle = {
   size: number;
 };
 
+type LaneMover = {
+  x: number;
+  visualX: number;
+  color: string;
+  width: number;
+  impact: number;
+  impactDirection: 1 | -1;
+};
+
 type Lane = {
   id: number;
   y: number;
   kind: LaneKind;
   direction: 1 | -1;
   speed: number;
-  cars: Array<{ x: number; visualX: number; color: string; width: number }>;
+  cars: LaneMover[];
   trees: number[];
   powerUp: { x: number; type: PowerUpType } | null;
   warningPlayed: boolean;
@@ -29,6 +38,32 @@ type Lane = {
 const LANE_HEIGHT = 72;
 const COLUMN_COUNT = 5;
 const CAR_COLORS = ['#ff5b45', '#ffb000', '#8b5cf6', '#10b981', '#38bdf8'];
+
+function PowerUpIcon({ type }: { type: PowerUpType }) {
+  if (type === 'double') {
+    return (
+      <svg viewBox="0 0 24 24" aria-hidden="true" className="h-5 w-5">
+        <path d="m13.7 2-8 11h5.1l-.5 9 8-12h-5.1l.5-8Z" fill="currentColor" />
+      </svg>
+    );
+  }
+
+  if (type === 'ghost') {
+    return (
+      <svg viewBox="0 0 24 24" aria-hidden="true" className="h-5 w-5">
+        <path d="M5 20V10a7 7 0 0 1 14 0v10l-2.3-1.8-2.3 1.8-2.4-1.8L9.6 20l-2.3-1.8L5 20Z" fill="currentColor" />
+        <circle cx="9.5" cy="10" r="1.3" fill="white" />
+        <circle cx="14.5" cy="10" r="1.3" fill="white" />
+      </svg>
+    );
+  }
+
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" className="h-5 w-5">
+      <path d="M7 3h10v3c0 2.5-1.4 4.6-3.5 6 2.1 1.4 3.5 3.5 3.5 6v3H7v-3c0-2.5 1.4-4.6 3.5-6A7.1 7.1 0 0 1 7 6V3Zm2 2v1c0 2 1.2 3.7 3 4.7 1.8-1 3-2.7 3-4.7V5H9Zm3 8.3c-1.8 1-3 2.7-3 4.7v1h6v-1c0-2-1.2-3.7-3-4.7Z" fill="currentColor" />
+    </svg>
+  );
+}
 
 export default function ChickenRoadGame({
   onGameFinished,
@@ -91,6 +126,10 @@ export default function ChickenRoadGame({
     cameraY: 0,
     targetCameraY: 0,
     hop: 0,
+    hopFoot: 1,
+    landingSquash: 0,
+    hitStop: 0,
+    impactFlash: 0,
     nextLaneId: 0,
     currentStep: 0,
     maxStep: 0,
@@ -297,20 +336,22 @@ export default function ChickenRoadGame({
           : carCount;
     const cars = kind !== 'grass'
       ? Array.from({ length: moverCount }, (_, index) => {
-          const x =
-            ((index + Math.random() * 0.45) * 300) % (width + 220) - 110;
-          return {
-            x,
-            visualX: x,
-            color: CAR_COLORS[(id + index) % CAR_COLORS.length],
-            width:
-              kind === 'rail'
-                ? 250
-                : kind === 'river'
-                  ? 105 + Math.floor(Math.random() * 90)
-                  : 66 + ((id + index) % 3) * 12,
-          };
-        })
+        const x =
+          ((index + Math.random() * 0.45) * 300) % (width + 220) - 110;
+        return {
+          x,
+          visualX: x,
+          color: CAR_COLORS[(id + index) % CAR_COLORS.length],
+          impact: 0,
+          impactDirection: direction,
+          width:
+            kind === 'rail'
+              ? 250
+              : kind === 'river'
+                ? 105 + Math.floor(Math.random() * 90)
+                : 66 + ((id + index) % 3) * 12,
+        };
+      })
       : [];
     const treeCount =
       kind === 'grass'
@@ -342,11 +383,11 @@ export default function ChickenRoadGame({
       Math.random() < Math.min(0.2, 0.11 + progress * 0.002);
     const powerUp = canSpawnPowerUp
       ? {
-          x: availablePowerColumns[
-            Math.floor(Math.random() * availablePowerColumns.length)
-          ],
-          type: powerTypes[Math.floor(Math.random() * powerTypes.length)],
-        }
+        x: availablePowerColumns[
+          Math.floor(Math.random() * availablePowerColumns.length)
+        ],
+        type: powerTypes[Math.floor(Math.random() * powerTypes.length)],
+      }
       : null;
 
     return {
@@ -379,6 +420,10 @@ export default function ChickenRoadGame({
     state.cameraY = 0;
     state.targetCameraY = 0;
     state.hop = 0;
+    state.hopFoot = 1;
+    state.landingSquash = 0;
+    state.hitStop = 0;
+    state.impactFlash = 0;
     state.currentStep = 0;
     state.maxStep = 0;
     state.lastForwardAt = 0;
@@ -417,6 +462,10 @@ export default function ChickenRoadGame({
           Math.abs(lane.y - y) < LANE_HEIGHT * 0.42 &&
           lane.trees.some((treeX) => Math.abs(treeX - x) < 34)
       );
+    const startHop = () => {
+      state.hop = 1;
+      state.hopFoot *= -1;
+    };
 
     if (direction === 'left') {
       const nextColumn = Math.max(0, state.playerColumn - 1);
@@ -424,18 +473,22 @@ export default function ChickenRoadGame({
       if (hasTreeAt(nextX, state.targetY)) return;
       state.playerColumn = nextColumn;
       state.targetX = nextX;
+      startHop();
+      playHop(false);
     } else if (direction === 'right') {
       const nextColumn = Math.min(COLUMN_COUNT - 1, state.playerColumn + 1);
       const nextX = columnX(nextColumn, state.width);
       if (hasTreeAt(nextX, state.targetY)) return;
       state.playerColumn = nextColumn;
       state.targetX = nextX;
+      startHop();
+      playHop(false);
     } else if (direction === 'backward') {
       if (state.targetY < state.height - LANE_HEIGHT * 0.55) {
         if (hasTreeAt(state.targetX, state.targetY + LANE_HEIGHT)) return;
         state.currentStep = Math.max(0, state.currentStep - 1);
         state.targetY += LANE_HEIGHT;
-        state.hop = 1;
+        startHop();
         state.combo = 0;
         setCombo(0);
         playHop(false);
@@ -457,7 +510,7 @@ export default function ChickenRoadGame({
         setCombo(state.combo);
       }
       state.targetY -= LANE_HEIGHT;
-      state.hop = 1;
+      startHop();
       for (let index = 0; index < 5; index += 1) {
         state.particles.push({
           x: state.playerX,
@@ -547,19 +600,32 @@ export default function ChickenRoadGame({
       context.roundRect(x, y, width, height, radius);
     };
 
-    const finishGame = () => {
+    const finishGame = (hitMover?: LaneMover) => {
       if (deadRef.current) return;
       deadRef.current = true;
-      game.current.shake = 9;
-      for (let index = 0; index < 22; index += 1) {
+      game.current.hitStop = 0.1;
+      game.current.shake = 22;
+      game.current.impactFlash = 1;
+      if (hitMover) {
+        hitMover.impact = 1;
+        hitMover.impactDirection =
+          game.current.playerX < hitMover.visualX + hitMover.width / 2 ? 1 : -1;
+      }
+      for (let index = 0; index < 38; index += 1) {
+        const colorIndex = index % 3;
         game.current.particles.push({
           x: game.current.playerX,
           y: game.current.playerY,
-          vx: (Math.random() - 0.5) * 180,
-          vy: (Math.random() - 0.7) * 150,
-          life: 0.8,
-          color: index % 2 === 0 ? '#ffffff' : '#ff5b45',
-          size: 4 + Math.random() * 6,
+          vx: (Math.random() - 0.5) * 270,
+          vy: (Math.random() - 0.72) * 230,
+          life: 0.9,
+          color:
+            colorIndex === 0
+              ? '#ffffff'
+              : colorIndex === 1
+                ? '#ff4d45'
+                : '#ffd21c',
+          size: 4 + Math.random() * 8,
         });
       }
       setDead(true);
@@ -591,10 +657,85 @@ export default function ChickenRoadGame({
       }
     };
 
+    const drawPickupIcon = (
+      type: PowerUpType,
+      x: number,
+      y: number
+    ) => {
+      context.save();
+      context.translate(x, y);
+      context.shadowColor = 'rgba(0,0,0,0.4)';
+      context.shadowBlur = 4;
+      context.shadowOffsetY = 3;
+      context.strokeStyle = '#ffffff';
+      context.fillStyle =
+        type === 'double'
+          ? '#ffd21c'
+          : type === 'ghost'
+            ? '#a855f7'
+            : '#22d3ee';
+      context.lineWidth = 3;
+      context.lineJoin = 'round';
+      context.lineCap = 'round';
+
+      if (type === 'double') {
+        context.beginPath();
+        context.moveTo(2, -13);
+        context.lineTo(-9, 2);
+        context.lineTo(-2, 2);
+        context.lineTo(-5, 13);
+        context.lineTo(9, -4);
+        context.lineTo(2, -4);
+        context.closePath();
+        context.fill();
+        context.stroke();
+      } else if (type === 'ghost') {
+        context.beginPath();
+        context.moveTo(-10, 11);
+        context.lineTo(-10, -2);
+        context.arc(0, -2, 10, Math.PI, 0);
+        context.lineTo(10, 11);
+        context.lineTo(5, 7);
+        context.lineTo(0, 11);
+        context.lineTo(-5, 7);
+        context.closePath();
+        context.fill();
+        context.stroke();
+        context.shadowColor = 'transparent';
+        context.fillStyle = '#ffffff';
+        context.beginPath();
+        context.arc(-3.7, -2, 1.7, 0, Math.PI * 2);
+        context.arc(3.7, -2, 1.7, 0, Math.PI * 2);
+        context.fill();
+      } else {
+        context.beginPath();
+        context.moveTo(-8, -11);
+        context.lineTo(8, -11);
+        context.moveTo(-8, 11);
+        context.lineTo(8, 11);
+        context.stroke();
+        context.beginPath();
+        context.moveTo(-6, -9);
+        context.lineTo(6, -9);
+        context.bezierCurveTo(6, -3, 2, -1, 0, 0);
+        context.bezierCurveTo(2, 1, 6, 3, 6, 9);
+        context.lineTo(-6, 9);
+        context.bezierCurveTo(-6, 3, -2, 1, 0, 0);
+        context.bezierCurveTo(-2, -1, -6, -3, -6, -9);
+        context.closePath();
+        context.fill();
+        context.stroke();
+      }
+      context.restore();
+    };
+
     const render = (time: number) => {
-      const dt = Math.min((time - previousTime) / 1000, 0.04);
+      const rawDt = Math.min((time - previousTime) / 1000, 0.04);
       previousTime = time;
       const state = game.current;
+      const frozen = state.hitStop > 0;
+      state.hitStop = Math.max(0, state.hitStop - rawDt);
+      const dt = frozen ? 0 : rawDt;
 
       const movementEase = 1 - Math.exp(-14 * dt);
       const cameraEase = 1 - Math.exp(-9 * dt);
@@ -602,7 +743,24 @@ export default function ChickenRoadGame({
       state.playerY += (state.targetY - state.playerY) * movementEase;
       state.cameraY +=
         (state.targetCameraY - state.cameraY) * cameraEase;
+      const wasHopping = state.hop > 0;
       state.hop = Math.max(0, state.hop - dt * 4.6);
+      if (wasHopping && state.hop === 0) {
+        state.landingSquash = 1;
+        for (let index = 0; index < 9; index += 1) {
+          state.particles.push({
+            x: state.playerX + (Math.random() - 0.5) * 24,
+            y: state.playerY + 26,
+            vx: (Math.random() - 0.5) * 95,
+            vy: -18 - Math.random() * 32,
+            life: 0.34,
+            color: index % 2 === 0 ? '#f7f1cf' : '#b9d98a',
+            size: 2 + Math.random() * 4,
+          });
+        }
+      }
+      state.landingSquash = Math.max(0, state.landingSquash - dt * 7.5);
+      state.impactFlash = Math.max(0, state.impactFlash - rawDt * 4.8);
 
       if (!deadRef.current && startedAtRef.current > 0) {
         const currentLane = state.lanes.reduce<Lane | null>((closest, lane) => {
@@ -769,36 +927,7 @@ export default function ChickenRoadGame({
 
         if (lane.powerUp) {
           const pickupY = lane.y;
-          const pickupColor =
-            lane.powerUp.type === 'double'
-              ? '#ffd21c'
-              : lane.powerUp.type === 'ghost'
-                ? '#c084fc'
-                : '#67e8f9';
-          context.fillStyle = 'rgba(0,0,0,0.22)';
-          context.beginPath();
-          context.ellipse(lane.powerUp.x + 3, pickupY + 15, 19, 7, 0, 0, Math.PI * 2);
-          context.fill();
-          context.fillStyle = pickupColor;
-          context.beginPath();
-          context.arc(lane.powerUp.x, pickupY, 18, 0, Math.PI * 2);
-          context.fill();
-          context.strokeStyle = '#ffffff';
-          context.lineWidth = 3;
-          context.stroke();
-          context.fillStyle = '#17202a';
-          context.font = '900 12px sans-serif';
-          context.textAlign = 'center';
-          context.textBaseline = 'middle';
-          context.fillText(
-            lane.powerUp.type === 'double'
-              ? '2X'
-              : lane.powerUp.type === 'ghost'
-                ? 'G'
-                : 'S',
-            lane.powerUp.x,
-            pickupY + 1
-          );
+          drawPickupIcon(lane.powerUp.type, lane.powerUp.x, pickupY);
 
           if (
             Math.abs(state.playerY - pickupY) < 22 &&
@@ -809,24 +938,27 @@ export default function ChickenRoadGame({
           }
         }
 
-        if (!deadRef.current && lane.kind !== 'grass') {
+        if (lane.kind !== 'grass') {
           let supportedByLog = false;
           for (const car of lane.cars) {
-            car.x +=
-              lane.speed * trafficSpeedMultiplier * lane.direction * dt;
-            if (lane.direction > 0 && car.x > state.width + 100) {
-              car.x = -car.width - 120;
-              car.visualX = car.x;
-              lane.warningPlayed = false;
-            }
-            if (lane.direction < 0 && car.x < -car.width - 120) {
-              car.x = state.width + 100;
-              car.visualX = car.x;
-              lane.warningPlayed = false;
+            if (!deadRef.current) {
+              car.x +=
+                lane.speed * trafficSpeedMultiplier * lane.direction * dt;
+              if (lane.direction > 0 && car.x > state.width + 100) {
+                car.x = -car.width - 120;
+                car.visualX = car.x;
+                lane.warningPlayed = false;
+              }
+              if (lane.direction < 0 && car.x < -car.width - 120) {
+                car.x = state.width + 100;
+                car.visualX = car.x;
+                lane.warningPlayed = false;
+              }
             }
             const vehicleEase =
               1 - Math.exp(-24 * Math.min(dt, 1 / 60));
             car.visualX += (car.x - car.visualX) * vehicleEase;
+            car.impact = Math.max(0, car.impact - dt * 2.4);
             const carX = car.visualX;
             if (lane.kind === 'rail' && !lane.warningPlayed) {
               const approaching =
@@ -856,7 +988,12 @@ export default function ChickenRoadGame({
               const onThisLog =
                 state.playerX > carX - 10 &&
                 state.playerX < carX + car.width + 10;
-              if (onThisLane && onThisLog && !supportedByLog) {
+              if (
+                !deadRef.current &&
+                onThisLane &&
+                onThisLog &&
+                !supportedByLog
+              ) {
                 supportedByLog = true;
                 const carriedDistance =
                   lane.speed * trafficSpeedMultiplier * lane.direction * dt;
@@ -875,7 +1012,13 @@ export default function ChickenRoadGame({
             context.save();
             const vehicleBob =
               lane.kind === 'rail' ? 0 : Math.sin(time * 0.008 + carX) * 1.5;
-            context.translate(carX + car.width / 2, lane.y + vehicleBob);
+            const impactKick = Math.sin(car.impact * Math.PI) * 12;
+            context.translate(
+              carX + car.width / 2 + impactKick * car.impactDirection,
+              lane.y + vehicleBob - car.impact * 3
+            );
+            context.rotate(car.impact * car.impactDirection * 0.13);
+            context.scale(1 + car.impact * 0.06, 1 - car.impact * 0.05);
             context.scale(lane.direction, 1);
 
             context.fillStyle = 'rgba(20,25,35,0.28)';
@@ -941,13 +1084,14 @@ export default function ChickenRoadGame({
 
             const playerHalf = 17;
             const colliding =
+              !deadRef.current &&
               !ghostActive &&
               state.playerX + playerHalf > carX &&
               state.playerX - playerHalf < carX + car.width &&
               state.playerY + playerHalf > carY &&
               state.playerY - playerHalf < carY + 44;
             if (colliding) {
-              finishGame();
+              finishGame(car);
             } else if (
               !ghostActive &&
               Math.abs(state.playerY - lane.y) < 18 &&
@@ -965,6 +1109,7 @@ export default function ChickenRoadGame({
           }
 
           if (
+            !deadRef.current &&
             !ghostActive &&
             lane.kind === 'river' &&
             Math.abs(state.playerY - lane.y) < 17 &&
@@ -975,38 +1120,77 @@ export default function ChickenRoadGame({
         }
       }
 
-      const hopY = Math.sin(state.hop * Math.PI) * 8;
+      const hopPhase = state.hop > 0 ? 1 - state.hop : 1;
+      const hopY = state.hop > 0 ? Math.sin(hopPhase * Math.PI) * 15 : 0;
+      const launchSquash =
+        state.hop > 0 && hopPhase < 0.16
+          ? 1 - hopPhase / 0.16
+          : 0;
+      const squashAmount = Math.max(
+        launchSquash * 0.15,
+        state.landingSquash * 0.18
+      );
+      const footCycle =
+        state.hop > 0
+          ? Math.sin(hopPhase * Math.PI * 2) * 6 * state.hopFoot
+          : 0;
       context.save();
       if (ghostActive) context.globalAlpha = 0.42;
       context.translate(state.playerX, state.playerY - hopY);
-      if (deadRef.current) context.rotate(Math.PI / 2);
 
       context.fillStyle = 'rgba(0,0,0,0.2)';
       context.beginPath();
-      context.ellipse(0, 22 + hopY, 22, 8, 0, 0, Math.PI * 2);
+      context.ellipse(
+        0,
+        22 + hopY,
+        22 - hopY * 0.28,
+        8 - hopY * 0.12,
+        0,
+        0,
+        Math.PI * 2
+      );
       context.fill();
-      context.fillStyle = '#f4f1df';
-      context.fillRect(-16, -3, 32, 29);
+      context.save();
+      if (deadRef.current) context.rotate(Math.PI / 2);
+      context.scale(1 + squashAmount, 1 - squashAmount);
+      // Single rounded cube chicken, matching the supplied reference.
+      context.fillStyle = '#d98616';
+      roundedRect(-16, 24 - Math.max(0, footCycle), 13, 7, 3);
+      context.fill();
+      roundedRect(5, 24 - Math.max(0, -footCycle), 15, 7, 3);
+      context.fill();
+
+      context.fillStyle = '#f2f0ea';
+      roundedRect(-21, -25, 42, 51, 9);
+      context.fill();
+      context.fillStyle = '#dcdad4';
+      roundedRect(14, -20, 7, 40, 4);
+      context.fill();
+      context.fillStyle = 'rgba(255,255,255,0.72)';
+      roundedRect(-17, -22, 29, 7, 4);
+      context.fill();
+
+      context.fillStyle = '#ebe9e3';
+      roundedRect(-25, -3, 7, 18, 3);
+      context.fill();
       context.fillStyle = '#ffffff';
-      context.fillRect(-14, -27, 28, 25);
-      context.fillStyle = '#e7e1c9';
-      context.fillRect(-16, 19, 32, 7);
-      context.fillStyle = '#ef4444';
-      context.fillRect(-8, -34, 7, 9);
-      context.fillRect(1, -37, 7, 12);
-      context.fillStyle = '#f59e0b';
-      context.beginPath();
-      context.moveTo(-7, -27);
-      context.lineTo(7, -27);
-      context.lineTo(0, -39);
-      context.closePath();
+      roundedRect(18, -3, 7, 18, 3);
       context.fill();
-      context.fillStyle = '#111827';
-      context.fillRect(-9, -21, 4, 4);
-      context.fillRect(5, -21, 4, 4);
-      context.fillStyle = '#e59a21';
-      context.fillRect(-11, 26, 5, 8);
-      context.fillRect(6, 26, 5, 8);
+
+      context.fillStyle = '#ef4c58';
+      roundedRect(-6, -31, 15, 7, 3);
+      context.fill();
+      context.fillStyle = '#cf3543';
+      context.fillRect(6, -28, 3, 4);
+
+      // The player sees the chicken from behind as it faces up the road.
+      context.fillStyle = '#ffffff';
+      roundedRect(-9, 9, 18, 11, 5);
+      context.fill();
+      context.fillStyle = '#dedcd5';
+      roundedRect(-5, 15, 10, 7, 3);
+      context.fill();
+      context.restore();
       context.restore();
 
       state.particles = state.particles.filter((particle) => {
@@ -1027,6 +1211,22 @@ export default function ChickenRoadGame({
       });
       context.globalAlpha = 1;
       context.restore();
+
+      if (state.impactFlash > 0) {
+        context.fillStyle = `rgba(255,255,255,${state.impactFlash * 0.32})`;
+        context.fillRect(0, 0, state.width, state.height);
+        context.strokeStyle = `rgba(255,210,28,${state.impactFlash * 0.9})`;
+        context.lineWidth = 5;
+        context.beginPath();
+        context.arc(
+          state.playerX,
+          state.playerY + state.cameraY,
+          28 + (1 - state.impactFlash) * 44,
+          0,
+          Math.PI * 2
+        );
+        context.stroke();
+      }
 
       animationFrame = requestAnimationFrame(render);
     };
@@ -1101,27 +1301,23 @@ export default function ChickenRoadGame({
           {activePowerUps.map((powerUp) => (
             <div
               key={powerUp}
-              className={`rounded-full border-2 border-white px-3 py-1 text-xs font-black text-[#17202a] shadow-lg ${
+              className={`flex items-center gap-1 text-xs font-black text-white drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)] ${
                 powerUp === 'double'
-                  ? 'bg-yellow-300'
+                  ? 'text-yellow-300'
                   : powerUp === 'ghost'
-                    ? 'bg-purple-300'
-                    : 'bg-cyan-300'
+                    ? 'text-purple-300'
+                    : 'text-cyan-300'
               }`}
             >
-              {powerUp === 'double'
-                ? '2× SCORE'
-                : powerUp === 'ghost'
-                  ? 'GHOST'
-                  : 'SLOW TRAFFIC'}{' '}
-              {powerUpSeconds[powerUp]}s
+              <PowerUpIcon type={powerUp} />
+              <span className="text-white">{powerUpSeconds[powerUp]}s</span>
             </div>
           ))}
         </div>
       )}
 
       {combo >= 2 && !dead && (
-        <div className="pointer-events-none absolute left-5 top-6 z-10 -rotate-3 rounded-xl border-2 border-white bg-orange-500 px-3 py-2 text-lg font-black text-white shadow-lg">
+        <div className="pointer-events-none absolute left-5 top-6 z-10 -rotate-3 rounded-xl border-2 border-white bg-orange-500 px-3 py-2 text-md font-black text-white shadow-lg">
           {combo}× COMBO
         </div>
       )}

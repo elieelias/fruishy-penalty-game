@@ -77,10 +77,10 @@ export default function App() {
       {screen !== AppScreen.REGISTRATION && screen !== AppScreen.GAMEPLAY && (
         <>
           <div className="fixed top-20 left-10 opacity-5 pointer-events-none z-0 animate-bounce">
-            <span className="material-symbols-outlined text-[120px] select-none">sports_soccer</span>
+            {/*<span className="material-symbols-outlined text-[120px] select-none">sports_soccer</span>*/}
           </div>
           <div className="fixed bottom-40 right-10 opacity-5 pointer-events-none z-0 animate-pulse">
-            <span className="material-symbols-outlined text-[100px] select-none">local_drink</span>
+            {/*<span className="material-symbols-outlined text-[100px] select-none">local_drink</span>*/}
           </div>
         </>
       )}

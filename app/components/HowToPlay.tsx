@@ -2,6 +2,7 @@
 
 import React from "react";
 import Image from "next/image";
+import { INITIAL_LEADERBOARD } from "../data/leaderboard";
 
 interface CoachTipsScreenProps {
     onPlay: () => void;
@@ -9,6 +10,8 @@ interface CoachTipsScreenProps {
 }
 
 export default function CoachTipsScreen({ onPlay, playerName }: CoachTipsScreenProps) {
+    const topPlayer = INITIAL_LEADERBOARD.find((entry) => entry.rank === 1);
+
     return (
         <div className="flex-grow pt-8 pb-32 px-4 flex flex-col gap-8 max-w-[600px] mx-auto w-full relative z-10">
             {/* Section 1: ROAD GUIDE */}
@@ -36,47 +39,101 @@ export default function CoachTipsScreen({ onPlay, playerName }: CoachTipsScreenP
                 </div>
             </section>
 
-            {/* Section 2: Instructions Bento Grid */}
-            <section className="flex flex-col gap-5">
-                {/* Step 1 */}
-                <div className="bg-secondary-container sticker-border p-5 rounded-xl hard-shadow-lg flex items-center gap-5 animate-float">
-                    <div className="bg-white rounded-full p-3.5 sticker-border flex items-center justify-center flex-shrink-0">
-                        <span className="material-symbols-outlined text-4xl text-on-secondary-container select-none">
+            {/* Current leader */}
+            {topPlayer && (
+                <section className="relative overflow-hidden rounded-xl sticker-border bg-inverse-surface px-5 py-4 hard-shadow-lg text-white">
+                    <div className="absolute -right-5 -top-7 rotate-12 text-[88px] text-white/5">
+                        <span className="material-symbols-outlined text-[88px]">emoji_events</span>
+                    </div>
+                    <div className="relative flex items-center gap-4">
+                        <div className="flex h-14 w-14 flex-shrink-0 -rotate-3 items-center justify-center rounded-lg border-3 border-white bg-tertiary-fixed font-headline-lg-mobile text-2xl font-black text-on-tertiary-fixed">
+                            #1
+                        </div>
+                        <div className="min-w-0 flex-grow">
+                            <p className="font-label-bold text-[10px] uppercase tracking-[0.18em] text-white/55">
+                                Player to beat
+                            </p>
+                            <p className="truncate font-headline-lg-mobile text-xl font-black uppercase leading-tight text-white">
+                                {topPlayer.name}
+                            </p>
+                        </div>
+                        <div className="text-right">
+                            <p className="font-headline-lg-mobile text-xl font-black text-secondary-fixed">
+                                {topPlayer.points.toLocaleString()}
+                            </p>
+                            <p className="font-label-bold text-[9px] uppercase tracking-wider text-white/50">
+                                points
+                            </p>
+                        </div>
+                    </div>
+                </section>
+            )}
+
+            {/* Instructions read as one guide rather than three buttons */}
+            <section className="flex flex-col gap-3">
+                <div className="flex items-end justify-between px-1">
+                    <h2 className="font-headline-lg-mobile text-2xl font-black uppercase italic text-on-surface">
+                        How to cross
+                    </h2>
+                    <span className="font-label-bold text-[10px] uppercase tracking-[0.16em] text-outline">
+                        3 quick rules
+                    </span>
+                </div>
+
+                <div className="overflow-hidden rounded-xl sticker-border bg-white hard-shadow-lg">
+                    <div className="grid grid-cols-[42px_48px_1fr] items-center gap-3 px-4 py-4">
+                        <span className="font-headline-lg-mobile text-3xl font-black text-secondary">
+                            01
+                        </span>
+                        <span className="material-symbols-outlined text-3xl text-secondary select-none">
                             touch_app
                         </span>
+                        <div>
+                            <h3 className="font-headline-lg-mobile text-lg font-black uppercase leading-tight text-on-surface">
+                                Tap to hop forward
+                            </h3>
+                            <p className="mt-0.5 font-body-md text-xs font-semibold text-on-surface-variant">
+                                Keep moving and build your combo.
+                            </p>
+                        </div>
                     </div>
-                    <div>
-                        <h3 className="font-headline-lg-mobile text-xl text-on-secondary-container uppercase font-black leading-tight">
-                            1. TAP TO HOP FORWARD
-                        </h3>
-                    </div>
-                </div>
 
-                {/* Step 2 */}
-                <div className="bg-tertiary-fixed sticker-border p-5 rounded-xl hard-shadow-lg flex items-center gap-5 animate-float-delayed">
-                    <div className="bg-white rounded-full p-3.5 sticker-border flex items-center justify-center flex-shrink-0">
-                        <span className="material-symbols-outlined text-4xl text-tertiary select-none">
+                    <div className="mx-4 border-t-2 border-dashed border-outline-variant" />
+
+                    <div className="grid grid-cols-[42px_48px_1fr] items-center gap-3 px-4 py-4">
+                        <span className="font-headline-lg-mobile text-3xl font-black text-tertiary">
+                            02
+                        </span>
+                        <span className="material-symbols-outlined text-3xl text-tertiary select-none">
                             swipe
                         </span>
+                        <div>
+                            <h3 className="font-headline-lg-mobile text-lg font-black uppercase leading-tight text-on-surface">
+                                Swipe to change lanes
+                            </h3>
+                            <p className="mt-0.5 font-body-md text-xs font-semibold text-on-surface-variant">
+                                Move left or right to find a safe path.
+                            </p>
+                        </div>
                     </div>
-                    <div>
-                        <h3 className="font-headline-lg-mobile text-l text-tertiary uppercase font-black leading-tight">
-                            2. SWIPE TO CHANGE LANES
-                        </h3>
-                    </div>
-                </div>
 
-                {/* Step 3 */}
-                <div className="bg-primary-container sticker-border p-5 rounded-xl hard-shadow-lg flex items-center gap-5 animate-float-more">
-                    <div className="bg-white rounded-full p-3.5 sticker-border flex items-center justify-center flex-shrink-0">
-                        <span className="material-symbols-outlined text-4xl text-primary select-none">
-                            redeem
+                    <div className="mx-4 border-t-2 border-dashed border-outline-variant" />
+
+                    <div className="grid grid-cols-[42px_48px_1fr] items-center gap-3 px-4 py-4">
+                        <span className="font-headline-lg-mobile text-3xl font-black text-primary">
+                            03
                         </span>
-                    </div>
-                    <div>
-                        <h3 className="font-headline-lg-mobile text-xl text-on-primary-container uppercase font-black leading-tight">
-                            3. DODGE TRAFFIC, TRAINS & WATER
-                        </h3>
+                        <span className="material-symbols-outlined text-3xl text-primary select-none">
+                            traffic
+                        </span>
+                        <div>
+                            <h3 className="font-headline-lg-mobile text-lg font-black uppercase leading-tight text-on-surface">
+                                Read every hazard
+                            </h3>
+                            <p className="mt-0.5 font-body-md text-xs font-semibold text-on-surface-variant">
+                                Dodge traffic, trains, and water.
+                            </p>
+                        </div>
                     </div>
                 </div>
             </section>
