@@ -1,11 +1,16 @@
 'use client'
 
 import React, { useState } from "react";
+import {
+    COUNTRY_THEMES,
+    CountryId,
+    DEFAULT_COUNTRY,
+} from "../data/countries";
 
 import 'material-symbols/outlined.css';
 
 interface RegistrationScreenProps {
-    onRegister: (name: string, phone: string) => void;
+    onRegister: (name: string, phone: string, country: CountryId) => void;
 }
 
 export default function RegistrationScreen({
@@ -13,6 +18,7 @@ export default function RegistrationScreen({
 }: RegistrationScreenProps) {
     const [name, setName] = useState("");
     const [phone, setPhone] = useState("");
+    const [country, setCountry] = useState<CountryId>(DEFAULT_COUNTRY);
     const [errorMsg, setErrorMsg] = useState("");
 
     const handleSubmit = () => {
@@ -24,7 +30,7 @@ export default function RegistrationScreen({
             setErrorMsg("Please enter your phone number to track scores!");
             return;
         }
-        onRegister(name.trim(), phone.trim());
+        onRegister(name.trim(), phone.trim(), country);
     };
 
     return (
@@ -103,6 +109,35 @@ export default function RegistrationScreen({
                             placeholder="000-000-0000"
                             type="tel"
                         />
+                    </div>
+
+                    <div className="flex flex-col gap-1">
+                        <label
+                            className="font-label-bold text-on-surface uppercase pl-1 text-xs tracking-wider"
+                            htmlFor="playerCountry"
+                        >
+                            CHOOSE YOUR TEAM
+                        </label>
+                        <div className="relative">
+                            <select
+                                className="h-12 w-full appearance-none rounded-lg border-2 border-on-background bg-surface-container-low px-3 pr-10 font-body-md font-bold text-on-surface outline-none transition-colors hard-shadow focus:border-secondary"
+                                id="playerCountry"
+                                value={country}
+                                onChange={(event) => {
+                                    setCountry(event.target.value as CountryId);
+                                    setErrorMsg("");
+                                }}
+                            >
+                                {COUNTRY_THEMES.map((team) => (
+                                    <option key={team.id} value={team.id}>
+                                        {team.flag} {team.name}
+                                    </option>
+                                ))}
+                            </select>
+                            <span className="material-symbols-outlined pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant">
+                                expand_more
+                            </span>
+                        </div>
                     </div>
 
                     <button

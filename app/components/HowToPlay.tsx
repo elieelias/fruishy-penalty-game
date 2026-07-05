@@ -138,6 +138,51 @@ export default function CoachTipsScreen({ onPlay, playerName }: CoachTipsScreenP
                 </div>
             </section>
 
+            <section className="flex flex-col gap-3">
+                <div className="flex items-end justify-between px-1">
+                    <h2 className="font-headline-lg-mobile text-2xl font-black uppercase italic text-on-surface">
+                        Power-ups
+                    </h2>
+                    <span className="font-label-bold text-[10px] uppercase tracking-[0.16em] text-outline">
+                        Collect on the pitch
+                    </span>
+                </div>
+
+                <div className="grid grid-cols-3 overflow-hidden rounded-xl sticker-border bg-inverse-surface text-white hard-shadow">
+                    <div className="flex flex-col items-center gap-1.5 px-2 py-4 text-center">
+                        <div className="relative h-8 w-10 text-yellow-300">
+                            <span className="material-symbols-outlined absolute left-0 top-1 text-2xl">
+                                sports_soccer
+                            </span>
+                            <span className="material-symbols-outlined absolute right-0 top-0 text-2xl">
+                                sports_soccer
+                            </span>
+                        </div>
+                        <p className="font-headline-lg-mobile text-xs font-black uppercase">
+                            Double score
+                        </p>
+                    </div>
+
+                    <div className="flex flex-col items-center gap-1.5 border-x-2 border-white/15 px-2 py-4 text-center">
+                        <span className="material-symbols-outlined text-3xl text-purple-300">
+                            shield
+                        </span>
+                        <p className="font-headline-lg-mobile text-xs font-black uppercase">
+                            Safe shield
+                        </p>
+                    </div>
+
+                    <div className="flex flex-col items-center gap-1.5 px-2 py-4 text-center">
+                        <span className="material-symbols-outlined text-3xl text-cyan-300">
+                            timer
+                        </span>
+                        <p className="font-headline-lg-mobile text-xs font-black uppercase">
+                            Slow traffic
+                        </p>
+                    </div>
+                </div>
+            </section>
+
             {/* CTA Button */}
             <button
                 onClick={onPlay}

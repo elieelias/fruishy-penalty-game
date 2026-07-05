@@ -5,6 +5,7 @@ import RegistrationScreen from "./components/RegistrationScreen";
 import CoachTipsScreen from "./components/HowToPlay";
 import LeaderboardScreen from "./components/GameOver";
 import ChickenRoadGame from "./components/PenaltyGame";
+import { CountryId, DEFAULT_COUNTRY } from "./data/countries";
 
 import 'material-symbols/outlined.css';
 
@@ -16,13 +17,15 @@ export default function App() {
     points: 0,
     rank: 0,
     credits: 0,
+    country: DEFAULT_COUNTRY,
   });
 
-  const handleRegister = (name: string, phone: string) => {
+  const handleRegister = (name: string, phone: string, country: CountryId) => {
     setPlayer((prev) => ({
       ...prev,
       name,
       phone,
+      country,
     }));
     setScreen(AppScreen.COACH_TIPS);
   };
@@ -102,6 +105,7 @@ export default function App() {
 
         {screen === AppScreen.GAMEPLAY && (
           <ChickenRoadGame
+            country={player.country}
             onGameFinished={handleGameFinished}
           />
         )}

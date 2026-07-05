@@ -3,6 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import type { CountryId } from "./data/countries";
+
 export enum AppScreen {
     REGISTRATION = "REGISTRATION",
     COACH_TIPS = "COACH_TIPS",
@@ -17,6 +19,7 @@ export interface Player {
     points: number;
     rank: number;
     credits: number;
+    country: CountryId;
 }
 
 export interface LeaderboardEntry {

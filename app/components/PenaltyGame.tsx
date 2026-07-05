@@ -1,6 +1,11 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import {
+  COUNTRY_THEMES,
+  CountryId,
+  getCountryTheme,
+} from '../data/countries';
 
 type LaneKind = 'grass' | 'road' | 'river' | 'rail';
 type PowerUpType = 'double' | 'ghost' | 'slow';
@@ -17,7 +22,7 @@ type Particle = {
 type LaneMover = {
   x: number;
   visualX: number;
-  color: string;
+  teamIndex: number;
   width: number;
   impact: number;
   impactDirection: 1 | -1;
@@ -37,13 +42,14 @@ type Lane = {
 
 const LANE_HEIGHT = 72;
 const COLUMN_COUNT = 5;
-const CAR_COLORS = ['#ff5b45', '#ffb000', '#8b5cf6', '#10b981', '#38bdf8'];
 
 function PowerUpIcon({ type }: { type: PowerUpType }) {
   if (type === 'double') {
     return (
       <svg viewBox="0 0 24 24" aria-hidden="true" className="h-5 w-5">
-        <path d="m13.7 2-8 11h5.1l-.5 9 8-12h-5.1l.5-8Z" fill="currentColor" />
+        <circle cx="8.5" cy="12.5" r="6.5" fill="currentColor" stroke="white" strokeWidth="1.5" />
+        <circle cx="15.5" cy="10" r="6.5" fill="currentColor" stroke="white" strokeWidth="1.5" />
+        <path d="m15.5 6.5 2.4 1.7-.9 2.8h-3l-.9-2.8 2.4-1.7ZM8.5 10l2.2 1.6-.8 2.6H7.1l-.8-2.6L8.5 10Z" fill="#17202a" />
       </svg>
     );
   }
@@ -51,25 +57,29 @@ function PowerUpIcon({ type }: { type: PowerUpType }) {
   if (type === 'ghost') {
     return (
       <svg viewBox="0 0 24 24" aria-hidden="true" className="h-5 w-5">
-        <path d="M5 20V10a7 7 0 0 1 14 0v10l-2.3-1.8-2.3 1.8-2.4-1.8L9.6 20l-2.3-1.8L5 20Z" fill="currentColor" />
-        <circle cx="9.5" cy="10" r="1.3" fill="white" />
-        <circle cx="14.5" cy="10" r="1.3" fill="white" />
+        <path d="M12 2 20 5v6c0 5.1-3.3 9.1-8 11-4.7-1.9-8-5.9-8-11V5l8-3Z" fill="currentColor" />
+        <path d="m8.2 12 2.3 2.3 5.3-5.3" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
     );
   }
 
   return (
     <svg viewBox="0 0 24 24" aria-hidden="true" className="h-5 w-5">
-      <path d="M7 3h10v3c0 2.5-1.4 4.6-3.5 6 2.1 1.4 3.5 3.5 3.5 6v3H7v-3c0-2.5 1.4-4.6 3.5-6A7.1 7.1 0 0 1 7 6V3Zm2 2v1c0 2 1.2 3.7 3 4.7 1.8-1 3-2.7 3-4.7V5H9Zm3 8.3c-1.8 1-3 2.7-3 4.7v1h6v-1c0-2-1.2-3.7-3-4.7Z" fill="currentColor" />
+      <circle cx="12" cy="13" r="8" fill="currentColor" stroke="white" strokeWidth="1.5" />
+      <path d="M9 2h6M12 5V2m5.7 5.3 1.8-1.8" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
+      <path d="M12 9v4l-3 2" fill="none" stroke="#17202a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }
 
 export default function ChickenRoadGame({
+  country,
   onGameFinished,
 }: {
+  country: CountryId;
   onGameFinished: (score: number) => void;
 }) {
+  const countryTheme = getCountryTheme(country);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const gameFinishedRef = useRef(onGameFinished);
   const [score, setScore] = useState(0);
@@ -92,6 +102,8 @@ export default function ChickenRoadGame({
   const activePowerUpsRef = useRef<PowerUpType[]>([]);
   const mutedRef = useRef(false);
   const audioContextRef = useRef<AudioContext | null>(null);
+  const crowdSourceRef = useRef<AudioBufferSourceNode | null>(null);
+  const crowdGainRef = useRef<GainNode | null>(null);
   const musicTimerRef = useRef<number | null>(null);
   const musicStepRef = useRef(0);
   const scoreRef = useRef(0);
@@ -211,8 +223,86 @@ export default function ChickenRoadGame({
     }
   }, [getAudioContext]);
 
+  const playWhistle = useCallback(() => {
+    if (mutedRef.current) return;
+    const audio = getAudioContext();
+    for (const offset of [0, 0.09]) {
+      const oscillator = audio.createOscillator();
+      const gain = audio.createGain();
+      oscillator.type = 'sine';
+      oscillator.frequency.setValueAtTime(1850, audio.currentTime + offset);
+      oscillator.frequency.linearRampToValueAtTime(
+        2250,
+        audio.currentTime + offset + 0.11
+      );
+      gain.gain.setValueAtTime(0.075, audio.currentTime + offset);
+      gain.gain.exponentialRampToValueAtTime(
+        0.001,
+        audio.currentTime + offset + 0.13
+      );
+      oscillator.connect(gain);
+      gain.connect(audio.destination);
+      oscillator.start(audio.currentTime + offset);
+      oscillator.stop(audio.currentTime + offset + 0.14);
+    }
+  }, [getAudioContext]);
+
+  const playCheer = useCallback(() => {
+    if (mutedRef.current) return;
+    const audio = getAudioContext();
+    const length = Math.floor(audio.sampleRate * 0.55);
+    const buffer = audio.createBuffer(1, length, audio.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let index = 0; index < length; index += 1) {
+      const envelope = Math.sin((index / length) * Math.PI);
+      data[index] = (Math.random() * 2 - 1) * envelope;
+    }
+    const source = audio.createBufferSource();
+    const filter = audio.createBiquadFilter();
+    const gain = audio.createGain();
+    source.buffer = buffer;
+    filter.type = 'bandpass';
+    filter.frequency.value = 950;
+    filter.Q.value = 0.55;
+    gain.gain.setValueAtTime(0.055, audio.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audio.currentTime + 0.55);
+    source.connect(filter);
+    filter.connect(gain);
+    gain.connect(audio.destination);
+    source.start();
+  }, [getAudioContext]);
+
   const startMusic = useCallback(() => {
     if (musicTimerRef.current !== null) return;
+    const crowdAudio = getAudioContext();
+    if (!crowdSourceRef.current) {
+      const crowdLength = crowdAudio.sampleRate * 2;
+      const crowdBuffer = crowdAudio.createBuffer(
+        1,
+        crowdLength,
+        crowdAudio.sampleRate
+      );
+      const crowdData = crowdBuffer.getChannelData(0);
+      for (let index = 0; index < crowdLength; index += 1) {
+        crowdData[index] =
+          (Math.random() * 2 - 1) *
+          (0.65 + Math.sin((index / crowdLength) * Math.PI * 12) * 0.12);
+      }
+      const crowdSource = crowdAudio.createBufferSource();
+      const crowdFilter = crowdAudio.createBiquadFilter();
+      const crowdGain = crowdAudio.createGain();
+      crowdSource.buffer = crowdBuffer;
+      crowdSource.loop = true;
+      crowdFilter.type = 'lowpass';
+      crowdFilter.frequency.value = 720;
+      crowdGain.gain.value = mutedRef.current ? 0 : 0.014;
+      crowdSource.connect(crowdFilter);
+      crowdFilter.connect(crowdGain);
+      crowdGain.connect(crowdAudio.destination);
+      crowdSource.start();
+      crowdSourceRef.current = crowdSource;
+      crowdGainRef.current = crowdGain;
+    }
     const melody = [
       262, 330, 392, 523, 392, 330, 294, 349,
       440, 587, 440, 349, 330, 392, 494, 392,
@@ -275,6 +365,7 @@ export default function ChickenRoadGame({
       if (musicTimerRef.current !== null) {
         window.clearInterval(musicTimerRef.current);
       }
+      crowdSourceRef.current?.stop();
       void audioContextRef.current?.close();
     };
   }, []);
@@ -341,7 +432,7 @@ export default function ChickenRoadGame({
         return {
           x,
           visualX: x,
-          color: CAR_COLORS[(id + index) % CAR_COLORS.length],
+          teamIndex: (id + index) % COUNTRY_THEMES.length,
           impact: 0,
           impactDirection: direction,
           width:
@@ -450,7 +541,10 @@ export default function ChickenRoadGame({
     if (deadRef.current || moveLocked.current) return;
     const state = game.current;
     startMusic();
-    if (startedAtRef.current === 0) startedAtRef.current = performance.now();
+    if (startedAtRef.current === 0) {
+      startedAtRef.current = performance.now();
+      playWhistle();
+    }
     moveLocked.current = true;
     window.setTimeout(() => {
       moveLocked.current = false;
@@ -508,6 +602,27 @@ export default function ChickenRoadGame({
         const speedBonus = Math.max(0, Math.round((1.4 - hopGap) * 45));
         bonusScoreRef.current += speedBonus + Math.min(50, state.combo * 4);
         setCombo(state.combo);
+        if (state.combo > 0 && state.combo % 5 === 0) {
+          playCheer();
+          const confettiColors = [
+            countryTheme.primary,
+            countryTheme.secondary,
+            countryTheme.accent,
+            '#ffffff',
+            '#ffd21c',
+          ];
+          for (let index = 0; index < 28; index += 1) {
+            state.particles.push({
+              x: state.playerX + (Math.random() - 0.5) * 70,
+              y: state.playerY - 34,
+              vx: (Math.random() - 0.5) * 170,
+              vy: -55 - Math.random() * 120,
+              life: 0.9 + Math.random() * 0.5,
+              color: confettiColors[index % confettiColors.length],
+              size: 3 + Math.random() * 5,
+            });
+          }
+        }
       }
       state.targetY -= LANE_HEIGHT;
       startHop();
@@ -545,7 +660,17 @@ export default function ChickenRoadGame({
       }, null);
       playHop(landingLane?.kind === 'grass');
     }
-  }, [columnX, makeLane, playHop, startMusic]);
+  }, [
+    columnX,
+    countryTheme.accent,
+    countryTheme.primary,
+    countryTheme.secondary,
+    makeLane,
+    playCheer,
+    playHop,
+    playWhistle,
+    startMusic,
+  ]);
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -644,14 +769,22 @@ export default function ChickenRoadGame({
       ) + duration;
       const color =
         type === 'double' ? '#ffd21c' : type === 'ghost' ? '#c084fc' : '#67e8f9';
-      for (let index = 0; index < 16; index += 1) {
+      playCheer();
+      const celebrationColors = [
+        color,
+        countryTheme.primary,
+        countryTheme.secondary,
+        countryTheme.accent,
+        '#ffffff',
+      ];
+      for (let index = 0; index < 24; index += 1) {
         game.current.particles.push({
           x: game.current.playerX,
           y: game.current.playerY,
           vx: (Math.random() - 0.5) * 120,
-          vy: (Math.random() - 0.5) * 120,
-          life: 0.65,
-          color,
+          vy: -35 - Math.random() * 110,
+          life: 0.65 + Math.random() * 0.45,
+          color: celebrationColors[index % celebrationColors.length],
           size: 3 + Math.random() * 5,
         });
       }
@@ -679,51 +812,77 @@ export default function ChickenRoadGame({
       context.lineCap = 'round';
 
       if (type === 'double') {
-        context.beginPath();
-        context.moveTo(2, -13);
-        context.lineTo(-9, 2);
-        context.lineTo(-2, 2);
-        context.lineTo(-5, 13);
-        context.lineTo(9, -4);
-        context.lineTo(2, -4);
-        context.closePath();
-        context.fill();
-        context.stroke();
+        for (const ball of [
+          { x: -6, y: 3 },
+          { x: 6, y: -3 },
+        ]) {
+          context.fillStyle = '#ffd21c';
+          context.strokeStyle = '#ffffff';
+          context.lineWidth = 2.5;
+          context.beginPath();
+          context.arc(ball.x, ball.y, 9, 0, Math.PI * 2);
+          context.fill();
+          context.stroke();
+          context.fillStyle = '#17202a';
+          context.beginPath();
+          context.arc(ball.x, ball.y, 3, 0, Math.PI * 2);
+          context.fill();
+          for (let spot = 0; spot < 5; spot += 1) {
+            const angle = (spot / 5) * Math.PI * 2;
+            context.beginPath();
+            context.arc(
+              ball.x + Math.cos(angle) * 6.2,
+              ball.y + Math.sin(angle) * 6.2,
+              1.4,
+              0,
+              Math.PI * 2
+            );
+            context.fill();
+          }
+        }
       } else if (type === 'ghost') {
         context.beginPath();
-        context.moveTo(-10, 11);
-        context.lineTo(-10, -2);
-        context.arc(0, -2, 10, Math.PI, 0);
-        context.lineTo(10, 11);
-        context.lineTo(5, 7);
-        context.lineTo(0, 11);
-        context.lineTo(-5, 7);
+        context.moveTo(0, -13);
+        context.lineTo(11, -9);
+        context.lineTo(11, 0);
+        context.bezierCurveTo(11, 8, 6, 12, 0, 15);
+        context.bezierCurveTo(-6, 12, -11, 8, -11, 0);
+        context.lineTo(-11, -9);
         context.closePath();
         context.fill();
         context.stroke();
         context.shadowColor = 'transparent';
-        context.fillStyle = '#ffffff';
+        context.strokeStyle = '#ffffff';
+        context.lineWidth = 2.4;
         context.beginPath();
-        context.arc(-3.7, -2, 1.7, 0, Math.PI * 2);
-        context.arc(3.7, -2, 1.7, 0, Math.PI * 2);
-        context.fill();
-      } else {
-        context.beginPath();
-        context.moveTo(-8, -11);
-        context.lineTo(8, -11);
-        context.moveTo(-8, 11);
-        context.lineTo(8, 11);
+        context.moveTo(-5, 1);
+        context.lineTo(-1, 5);
+        context.lineTo(6, -3);
         context.stroke();
+      } else {
+        context.fillStyle = '#22d3ee';
+        context.strokeStyle = '#ffffff';
+        context.lineWidth = 3;
         context.beginPath();
-        context.moveTo(-6, -9);
-        context.lineTo(6, -9);
-        context.bezierCurveTo(6, -3, 2, -1, 0, 0);
-        context.bezierCurveTo(2, 1, 6, 3, 6, 9);
-        context.lineTo(-6, 9);
-        context.bezierCurveTo(-6, 3, -2, 1, 0, 0);
-        context.bezierCurveTo(-2, -1, -6, -3, -6, -9);
-        context.closePath();
+        context.arc(0, 2, 11, 0, Math.PI * 2);
         context.fill();
+        context.stroke();
+        context.strokeStyle = '#22d3ee';
+        context.lineWidth = 3;
+        context.beginPath();
+        context.moveTo(-4, -12);
+        context.lineTo(4, -12);
+        context.moveTo(0, -12);
+        context.lineTo(0, -9);
+        context.moveTo(8, -8);
+        context.lineTo(11, -11);
+        context.stroke();
+        context.strokeStyle = '#17202a';
+        context.lineWidth = 2.2;
+        context.beginPath();
+        context.moveTo(0, -3);
+        context.lineTo(0, 3);
+        context.lineTo(-5, 6);
         context.stroke();
       }
       context.restore();
@@ -859,8 +1018,9 @@ export default function ChickenRoadGame({
           context.stroke();
           context.setLineDash([]);
         } else if (lane.kind === 'river') {
+          const laneTop = lane.y - LANE_HEIGHT / 2;
           context.fillStyle = '#27a8df';
-          context.fillRect(0, lane.y - LANE_HEIGHT / 2, state.width, LANE_HEIGHT);
+          context.fillRect(0, laneTop, state.width, LANE_HEIGHT);
           context.strokeStyle = 'rgba(255,255,255,0.2)';
           context.lineWidth = 2;
           const waveOffset = (time * 0.025 * lane.direction) % 70;
@@ -870,9 +1030,22 @@ export default function ChickenRoadGame({
             context.lineTo(x + 28, lane.y - 18);
             context.stroke();
           }
+          for (let bannerX = 0; bannerX < state.width; bannerX += 96) {
+            const bannerTheme =
+              COUNTRY_THEMES[
+                (lane.id + Math.floor(bannerX / 96)) % COUNTRY_THEMES.length
+              ];
+            context.fillStyle = bannerTheme.primary;
+            context.fillRect(bannerX, laneTop, 62, 6);
+            context.fillStyle = bannerTheme.secondary;
+            context.fillRect(bannerX + 62, laneTop, 20, 6);
+            context.fillStyle = bannerTheme.accent;
+            context.fillRect(bannerX + 82, laneTop, 14, 6);
+          }
         } else if (lane.kind === 'rail') {
+          const laneTop = lane.y - LANE_HEIGHT / 2;
           context.fillStyle = '#8b8174';
-          context.fillRect(0, lane.y - LANE_HEIGHT / 2, state.width, LANE_HEIGHT);
+          context.fillRect(0, laneTop, state.width, LANE_HEIGHT);
           context.strokeStyle = '#27272a';
           context.lineWidth = 5;
           context.beginPath();
@@ -885,6 +1058,20 @@ export default function ChickenRoadGame({
           for (let x = 0; x < state.width; x += 30) {
             context.fillRect(x, lane.y - 27, 9, 54);
           }
+          for (let bannerX = 0; bannerX < state.width; bannerX += 110) {
+            const bannerTheme =
+              COUNTRY_THEMES[
+                (lane.id + Math.floor(bannerX / 110)) % COUNTRY_THEMES.length
+              ];
+            context.fillStyle = '#f8fafc';
+            context.fillRect(bannerX + 4, laneTop + 2, 86, 11);
+            context.fillStyle = bannerTheme.primary;
+            context.fillRect(bannerX + 6, laneTop + 4, 48, 7);
+            context.fillStyle = bannerTheme.secondary;
+            context.fillRect(bannerX + 54, laneTop + 4, 18, 7);
+            context.fillStyle = bannerTheme.accent;
+            context.fillRect(bannerX + 72, laneTop + 4, 16, 7);
+          }
           if (lane.warningPlayed) {
             const warningOn = Math.floor(time / 170) % 2 === 0;
             context.fillStyle = '#171717';
@@ -896,32 +1083,103 @@ export default function ChickenRoadGame({
             context.fill();
           }
         } else {
-          context.fillStyle = lane.id % 8 === 0 ? '#70c53f' : '#80d34a';
-          context.fillRect(0, lane.y - LANE_HEIGHT / 2, state.width, LANE_HEIGHT);
-          for (let x = 18; x < state.width; x += 58) {
-            context.fillStyle = 'rgba(30,120,35,0.24)';
+          const laneTop = lane.y - LANE_HEIGHT / 2;
+          context.fillStyle = '#64bd45';
+          context.fillRect(0, laneTop, state.width, LANE_HEIGHT);
+          for (let stripeX = 0; stripeX < state.width; stripeX += 72) {
+            context.fillStyle =
+              Math.floor(stripeX / 72) % 2 === lane.id % 2
+                ? 'rgba(255,255,255,0.055)'
+                : 'rgba(16,95,39,0.055)';
+            context.fillRect(stripeX, laneTop, 72, LANE_HEIGHT);
+          }
+          context.strokeStyle = 'rgba(255,255,255,0.42)';
+          context.lineWidth = 2;
+          context.beginPath();
+          context.moveTo(0, laneTop + 2);
+          context.lineTo(state.width, laneTop + 2);
+          context.moveTo(0, laneTop + LANE_HEIGHT - 2);
+          context.lineTo(state.width, laneTop + LANE_HEIGHT - 2);
+          context.stroke();
+
+          if (lane.id % 6 === 0) {
+            context.strokeStyle = 'rgba(255,255,255,0.48)';
             context.beginPath();
-            context.arc(x + (lane.id % 2) * 19, lane.y, 4, 0, Math.PI * 2);
+            context.moveTo(state.width / 2, laneTop);
+            context.lineTo(state.width / 2, laneTop + LANE_HEIGHT);
+            context.stroke();
+            context.beginPath();
+            context.arc(state.width / 2, lane.y, 19, 0, Math.PI * 2);
+            context.stroke();
+            context.fillStyle = 'rgba(255,255,255,0.7)';
+            context.beginPath();
+            context.arc(state.width / 2, lane.y, 2.5, 0, Math.PI * 2);
             context.fill();
-            if ((Math.round((x - 18) / 58) + lane.id) % 3 === 0) {
-              context.fillStyle = lane.id % 2 === 0 ? '#ffe45c' : '#f8fafc';
-              context.fillRect(x + 8, lane.y - 15, 4, 4);
-              context.fillStyle = '#237b36';
-              context.fillRect(x + 9, lane.y - 11, 2, 7);
+          }
+
+          // Light tournament dressing: footballs and training cones.
+          context.save();
+          context.globalAlpha = 0.78;
+          for (let item = 0; item < 3; item += 1) {
+            const itemX =
+              ((lane.id * 97 + item * 181 + 54) % (state.width + 80)) - 40;
+            const itemY = lane.y + (item % 2 === 0 ? -16 : 17);
+            if ((lane.id + item) % 3 === 0) {
+              context.fillStyle = '#ff8a00';
+              context.beginPath();
+              context.moveTo(itemX, itemY - 7);
+              context.lineTo(itemX - 6, itemY + 6);
+              context.lineTo(itemX + 6, itemY + 6);
+              context.closePath();
+              context.fill();
+              context.fillStyle = '#ffffff';
+              context.fillRect(itemX - 4, itemY, 8, 2);
+              context.fillStyle = 'rgba(25,30,30,0.24)';
+              context.fillRect(itemX - 8, itemY + 6, 16, 3);
+            } else {
+              context.fillStyle = '#ffffff';
+              context.strokeStyle = '#263238';
+              context.lineWidth = 1.5;
+              context.beginPath();
+              context.arc(itemX, itemY, 7, 0, Math.PI * 2);
+              context.fill();
+              context.stroke();
+              context.fillStyle = '#263238';
+              context.beginPath();
+              context.arc(itemX, itemY, 2.5, 0, Math.PI * 2);
+              context.fill();
+              for (let spot = 0; spot < 5; spot += 1) {
+                const angle = (spot / 5) * Math.PI * 2;
+                context.beginPath();
+                context.arc(
+                  itemX + Math.cos(angle) * 4.7,
+                  itemY + Math.sin(angle) * 4.7,
+                  1.2,
+                  0,
+                  Math.PI * 2
+                );
+                context.fill();
+              }
             }
           }
+          context.restore();
+
           for (const treeX of lane.trees) {
             const sway = Math.sin(time * 0.0018 + treeX * 0.04) * 1.8;
+            const flagTheme =
+              COUNTRY_THEMES[
+                (lane.id + Math.floor(treeX / 40)) % COUNTRY_THEMES.length
+              ];
             context.fillStyle = 'rgba(20,70,20,0.22)';
-            context.fillRect(treeX - 13, lane.y + 13, 34, 10);
-            context.fillStyle = '#704321';
-            context.fillRect(treeX - 5, lane.y - 4, 10, 27);
-            context.fillStyle = '#176b2b';
-            context.fillRect(treeX - 20 + sway, lane.y - 29, 40, 34);
-            context.fillStyle = '#2fa943';
-            context.fillRect(treeX - 16 + sway, lane.y - 34, 34, 29);
-            context.fillStyle = 'rgba(255,255,255,0.14)';
-            context.fillRect(treeX - 12 + sway, lane.y - 30, 25, 6);
+            context.fillRect(treeX - 16, lane.y + 17, 36, 8);
+            context.fillStyle = '#e8e4da';
+            context.fillRect(treeX - 3, lane.y - 24, 6, 45);
+            context.fillStyle = flagTheme.primary;
+            context.fillRect(treeX + 2 + sway, lane.y - 24, 30, 17);
+            context.fillStyle = flagTheme.secondary;
+            context.fillRect(treeX + 2 + sway, lane.y - 7, 30, 13);
+            context.fillStyle = flagTheme.accent;
+            context.fillRect(treeX + 2 + sway, lane.y + 3, 30, 3);
           }
         }
 
@@ -973,16 +1231,49 @@ export default function ChickenRoadGame({
 
             const carY = lane.y - 23;
             if (lane.kind === 'river') {
+              const raftTheme = COUNTRY_THEMES[car.teamIndex];
               context.fillStyle = 'rgba(0,0,0,0.18)';
               roundedRect(carX + 3, carY + 7, car.width, 38, 9);
               context.fill();
-              context.fillStyle = '#8b572f';
+              context.fillStyle = raftTheme.primary;
+              context.strokeStyle = '#ffffff';
+              context.lineWidth = 2;
               roundedRect(carX, carY + 2, car.width, 34, 10);
               context.fill();
-              context.fillStyle = '#b7793f';
-              for (let ringX = carX + 18; ringX < carX + car.width; ringX += 38) {
-                context.fillRect(ringX, carY + 5, 4, 28);
+              context.stroke();
+              context.fillStyle = raftTheme.secondary;
+              roundedRect(carX + 7, carY + 8, car.width - 14, 20, 6);
+              context.fill();
+              context.fillStyle = raftTheme.accent;
+              for (let seatX = carX + 18; seatX < carX + car.width - 8; seatX += 32) {
+                context.beginPath();
+                context.arc(seatX, carY + 18, 6, 0, Math.PI * 2);
+                context.fill();
               }
+              context.strokeStyle = '#f8fafc';
+              context.lineWidth = 2;
+              context.beginPath();
+              context.moveTo(carX + 12, carY + 8);
+              context.lineTo(carX + 12, carY - 10);
+              context.stroke();
+              context.fillStyle = raftTheme.primary;
+              context.fillRect(carX + 13, carY - 10, 18, 5);
+              context.fillStyle = raftTheme.secondary;
+              context.fillRect(carX + 13, carY - 5, 18, 5);
+              context.fillStyle = raftTheme.accent;
+              context.fillRect(carX + 13, carY, 18, 3);
+
+              context.fillStyle = '#ffffff';
+              context.strokeStyle = '#263238';
+              context.lineWidth = 1;
+              context.beginPath();
+              context.arc(carX + car.width - 18, carY + 18, 6, 0, Math.PI * 2);
+              context.fill();
+              context.stroke();
+              context.fillStyle = '#263238';
+              context.beginPath();
+              context.arc(carX + car.width - 18, carY + 18, 2.2, 0, Math.PI * 2);
+              context.fill();
 
               const onThisLane = Math.abs(state.playerY - lane.y) < 17;
               const onThisLog =
@@ -1027,9 +1318,17 @@ export default function ChickenRoadGame({
             context.fill();
 
             if (lane.kind === 'rail') {
-              context.fillStyle = '#7c3aed';
+              const shuttleTheme = COUNTRY_THEMES[car.teamIndex];
+              context.fillStyle = shuttleTheme.primary;
+              context.strokeStyle = '#20242a';
+              context.lineWidth = 2;
               roundedRect(-car.width / 2, -22, car.width, 44, 6);
               context.fill();
+              context.stroke();
+              context.fillStyle = shuttleTheme.secondary;
+              context.fillRect(-car.width / 2 + 3, 7, car.width - 6, 10);
+              context.fillStyle = shuttleTheme.accent;
+              context.fillRect(-car.width / 2 + 3, 17, car.width - 6, 4);
               context.fillStyle = '#d9f7ff';
               for (
                 let windowX = -car.width / 2 + 18;
@@ -1040,11 +1339,28 @@ export default function ChickenRoadGame({
               }
               context.fillStyle = 'rgba(255,255,255,0.2)';
               context.fillRect(-car.width / 2 + 4, -19, car.width - 8, 7);
+              context.fillStyle = '#ffffff';
+              context.font = '900 10px sans-serif';
+              context.textAlign = 'center';
+              context.textBaseline = 'middle';
+              context.fillText('CUP EXPRESS', 0, 13);
+              context.fillStyle = '#ffffff';
+              context.beginPath();
+              context.arc(car.width / 2 - 18, -2, 9, 0, Math.PI * 2);
+              context.fill();
+              context.fillStyle = '#20242a';
+              context.beginPath();
+              context.arc(car.width / 2 - 18, -2, 3, 0, Math.PI * 2);
+              context.fill();
             } else {
-              context.fillStyle = car.color;
+              const vehicleTheme = COUNTRY_THEMES[car.teamIndex];
+              context.fillStyle = vehicleTheme.primary;
+              context.strokeStyle = '#20242a';
+              context.lineWidth = 2;
               roundedRect(-car.width / 2, -13, car.width, 32, 7);
               context.fill();
-              context.fillStyle = car.color;
+              context.stroke();
+              context.fillStyle = vehicleTheme.secondary;
               context.beginPath();
               context.moveTo(-car.width * 0.24, -13);
               context.lineTo(-car.width * 0.11, -27);
@@ -1052,6 +1368,7 @@ export default function ChickenRoadGame({
               context.lineTo(car.width * 0.34, -13);
               context.closePath();
               context.fill();
+              context.stroke();
               context.fillStyle = '#91ebf3';
               context.beginPath();
               context.moveTo(-car.width * 0.07, -23);
@@ -1067,8 +1384,49 @@ export default function ChickenRoadGame({
               context.lineTo(car.width * 0.1, -14);
               context.closePath();
               context.fill();
-              context.fillStyle = 'rgba(255,255,255,0.2)';
-              context.fillRect(-car.width / 2 + 6, -8, car.width - 12, 6);
+              context.fillStyle = vehicleTheme.accent;
+              context.fillRect(-car.width / 2 + 2, -7, car.width - 4, 7);
+
+              // Supporter flag mounted above each tournament vehicle.
+              context.strokeStyle = '#e8e6df';
+              context.lineWidth = 2;
+              context.beginPath();
+              context.moveTo(-car.width * 0.29, -14);
+              context.lineTo(-car.width * 0.29, -35);
+              context.stroke();
+              context.fillStyle = vehicleTheme.primary;
+              context.fillRect(-car.width * 0.29, -35, 17, 5);
+              context.fillStyle = vehicleTheme.secondary;
+              context.fillRect(-car.width * 0.29, -30, 17, 5);
+              context.fillStyle = vehicleTheme.accent;
+              context.fillRect(-car.width * 0.29, -25, 17, 4);
+
+              // Football decal on the door.
+              const ballX = car.width * 0.18;
+              context.fillStyle = '#ffffff';
+              context.strokeStyle = '#20242a';
+              context.lineWidth = 1.5;
+              context.beginPath();
+              context.arc(ballX, 5, 7, 0, Math.PI * 2);
+              context.fill();
+              context.stroke();
+              context.fillStyle = '#20242a';
+              context.beginPath();
+              context.arc(ballX, 5, 2.5, 0, Math.PI * 2);
+              context.fill();
+              for (let spot = 0; spot < 5; spot += 1) {
+                const angle = (spot / 5) * Math.PI * 2;
+                context.beginPath();
+                context.arc(
+                  ballX + Math.cos(angle) * 4.8,
+                  5 + Math.sin(angle) * 4.8,
+                  1.1,
+                  0,
+                  Math.PI * 2
+                );
+                context.fill();
+              }
+
               context.fillStyle = '#242428';
               context.beginPath();
               context.arc(-car.width / 2 + 16, 18, 9, 0, Math.PI * 2);
@@ -1160,20 +1518,20 @@ export default function ChickenRoadGame({
       roundedRect(5, 24 - Math.max(0, -footCycle), 15, 7, 3);
       context.fill();
 
-      context.fillStyle = '#f2f0ea';
+      context.fillStyle = countryTheme.primary;
       roundedRect(-21, -25, 42, 51, 9);
       context.fill();
-      context.fillStyle = '#dcdad4';
+      context.fillStyle = countryTheme.secondary;
       roundedRect(14, -20, 7, 40, 4);
       context.fill();
       context.fillStyle = 'rgba(255,255,255,0.72)';
       roundedRect(-17, -22, 29, 7, 4);
       context.fill();
 
-      context.fillStyle = '#ebe9e3';
+      context.fillStyle = countryTheme.secondary;
       roundedRect(-25, -3, 7, 18, 3);
       context.fill();
-      context.fillStyle = '#ffffff';
+      context.fillStyle = countryTheme.accent;
       roundedRect(18, -3, 7, 18, 3);
       context.fill();
 
@@ -1184,7 +1542,13 @@ export default function ChickenRoadGame({
       context.fillRect(6, -28, 3, 4);
 
       // The player sees the chicken from behind as it faces up the road.
-      context.fillStyle = '#ffffff';
+      context.fillStyle = countryTheme.secondary;
+      roundedRect(-19, -2, 38, 9, 3);
+      context.fill();
+      context.fillStyle = countryTheme.accent;
+      roundedRect(-19, 7, 38, 6, 2);
+      context.fill();
+      context.fillStyle = countryTheme.primary;
       roundedRect(-9, 9, 18, 11, 5);
       context.fill();
       context.fillStyle = '#dedcd5';
@@ -1239,7 +1603,15 @@ export default function ChickenRoadGame({
       cancelAnimationFrame(animationFrame);
       window.removeEventListener('resize', resize);
     };
-  }, [initialiseGame, playAlert, playCrash]);
+  }, [
+    countryTheme.accent,
+    countryTheme.primary,
+    countryTheme.secondary,
+    initialiseGame,
+    playAlert,
+    playCheer,
+    playCrash,
+  ]);
 
   const onPointerDown = (event: React.PointerEvent) => {
     pointerStart.current = { x: event.clientX, y: event.clientY };
@@ -1278,6 +1650,13 @@ export default function ChickenRoadGame({
         onClick={() => {
           mutedRef.current = !mutedRef.current;
           setMuted(mutedRef.current);
+          if (crowdGainRef.current && audioContextRef.current) {
+            crowdGainRef.current.gain.setTargetAtTime(
+              mutedRef.current ? 0 : 0.014,
+              audioContextRef.current.currentTime,
+              0.05
+            );
+          }
         }}
         className="absolute right-4 top-5 z-20 flex h-12 w-12 cursor-pointer items-center justify-center rounded-full border-2 border-white/25 bg-black/65 text-2xl text-white shadow-xl backdrop-blur-md"
       >
