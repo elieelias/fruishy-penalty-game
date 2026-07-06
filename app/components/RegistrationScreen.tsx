@@ -10,7 +10,7 @@ import {
 import 'material-symbols/outlined.css';
 
 interface RegistrationScreenProps {
-    onRegister: (name: string, phone: string, country: CountryId) => void;
+    onRegister: (name: string, phone: string, country: CountryId) => Promise<void>;
 }
 
 export default function RegistrationScreen({
@@ -20,17 +20,29 @@ export default function RegistrationScreen({
     const [phone, setPhone] = useState("");
     const [country, setCountry] = useState<CountryId>(DEFAULT_COUNTRY);
     const [errorMsg, setErrorMsg] = useState("");
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const handleSubmit = () => {
+    const handleSubmit = async () => {
         if (!name.trim()) {
-            setErrorMsg("Please enter your striker name!");
+            setErrorMsg("Please enter your name!");
             return;
         }
         if (!phone.trim()) {
-            setErrorMsg("Please enter your phone number to track scores!");
+            setErrorMsg("Please enter your phone number!");
             return;
         }
-        onRegister(name.trim(), phone.trim(), country);
+        setIsSubmitting(true);
+        try {
+            await onRegister(name.trim(), phone.trim(), country);
+        } catch (error) {
+            setErrorMsg(
+                error instanceof Error
+                    ? error.message
+                    : "We could not start the game. Please try again."
+            );
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     return (
@@ -42,8 +54,8 @@ export default function RegistrationScreen({
                 <img
                     alt="Fruishy Brand Logo"
                     referrerPolicy="no-referrer"
-                    className="w-32 h-32 md:w-32 md:h-32 object-contain rounded-full sticker-border hard-shadow bg-surface hover:scale-105 transition-transform duration-300"
-                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuC8qqva8bwHQeRwjPMJdsa9TkOjxAfIMO5wdAa1X3Q3FvgY_mrvGOVd10-LGMOfL8uTKsB2CmFmk9h6Htk63cjkMMf2Extjg_ExclO-ZbOijg19-AFOZtdtG1HkZ8ItWawnXqgYj4bXvnTYdOcSCgAxrwgdPI_aI9U-8MpAAcIrLLB-QexO-NeNbDLwaqu6V5jnYTQicP3W2u5io0DyJ7c59CjsZb1dFVq5wIE2KmGsqFoclC7lSM3F147ke8hy2LxRfGFguY5B3gix"
+                    className="w-30 h-30 md:w-30 md:h-30 object-contain rounded-full sticker-border hard-shadow bg-surface hover:scale-105 transition-transform duration-300"
+                    src="/logo.jpeg"
                 />
                 <div className="absolute -top-2 -right-4 bg-secondary-container text-on-secondary-container font-label-bold px-3 py-1 rounded-full sticker-border hard-shadow transform rotate-12 text-xs">
                     WIN BIG!
@@ -62,7 +74,7 @@ export default function RegistrationScreen({
                     className="flex flex-col gap-3.5 w-full"
                     onSubmit={(event) => {
                         event.preventDefault();
-                        handleSubmit();
+                        void handleSubmit();
                     }}
                 >
                     {errorMsg && (
@@ -143,9 +155,10 @@ export default function RegistrationScreen({
                     <button
                         className="mt-2 w-full bg-primary-container text-on-primary-container font-headline-lg-mobile text-xl uppercase rounded-xl py-3.5 sticker-border hard-shadow hover:bg-primary-fixed hover:translate-y-0.5 hover:shadow-[2px_2px_0_0_#1c1b1b] transition-all active:translate-y-1 active:shadow-none relative overflow-hidden group cursor-pointer"
                         type="submit"
+                        disabled={isSubmitting}
                     >
                         <span className="relative z-10 flex items-center justify-center gap-2">
-                            START GAME{" "}
+                            {isSubmitting ? "CHECKING CODE..." : "START GAME"}{" "}
                             <span className="material-symbols-outlined select-none text-xl">sports_score</span>
                         </span>
                         <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>

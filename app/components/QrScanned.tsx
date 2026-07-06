@@ -1,13 +1,15 @@
+"use client";
+
 import React from "react";
 
 interface CodeUsedScreenProps {
-    onBackToRedeem: () => void;
-    onBackToHome: () => void;
+    onBackToRedeem?: () => void;
+    onBackToHome?: () => void;
 }
 
 export default function CodeUsedScreen({
-    onBackToRedeem,
-    onBackToHome,
+    onBackToRedeem = () => window.location.assign("/"),
+    onBackToHome = () => window.location.assign("/"),
 }: CodeUsedScreenProps) {
     return (
         <div className="flex-grow flex flex-col items-center justify-center px-4 pt-16 pb-32 relative z-10 w-full max-w-lg mx-auto">
