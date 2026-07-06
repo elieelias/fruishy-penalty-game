@@ -1,4 +1,5 @@
 import GameApp from "../components/GameApp";
+import GameUnavailable from "../components/GameUnavailable";
 import QrScanned from "../components/QrScanned";
 import { callSupabaseRpc } from "../lib/supabase-rest";
 
@@ -22,7 +23,7 @@ export default async function PlayPage({
       { p_qr_token: token }
     );
   } catch {
-    return <QrScanned />;
+    return <GameUnavailable />;
   }
 
   return isAvailable ? <GameApp token={token} /> : <QrScanned />;
