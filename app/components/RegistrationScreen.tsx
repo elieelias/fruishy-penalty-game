@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState } from "react";
+import Image from "next/image";
 import {
     COUNTRY_THEMES,
     CountryId,
@@ -12,6 +13,16 @@ import 'material-symbols/outlined.css';
 interface RegistrationScreenProps {
     onRegister: (name: string, phone: string, country: CountryId) => Promise<void>;
 }
+
+const SPONSORS = [
+    { name: "Saturdays", logo: "/sponsors/saturdays.svg" },
+    { name: "Frozen Flame", logo: "/sponsors/frozenflame.svg" },
+    { name: "Junkies", logo: "/sponsors/junkies.svg" },
+    { name: "Nerdy Tech", logo: "/sponsors/nerdytech.svg" },
+    { name: "The Buzz Bar", logo: "/sponsors/thebuzzbar.svg" },
+    { name: "Woudin", logo: "/sponsors/woudin.svg" },
+    { name: "Yasmina Park", logo: "/sponsors/yasminapark.svg" },
+];
 
 export default function RegistrationScreen({
     onRegister,
@@ -51,11 +62,12 @@ export default function RegistrationScreen({
         >
             {/* Hero Logo with WIN BIG! sticker */}
             <div className="relative group animate-bounce-slow">
-                <img
+                <Image
                     alt="Fruishy Brand Logo"
-                    referrerPolicy="no-referrer"
                     className="w-30 h-30 md:w-30 md:h-30 object-contain rounded-full sticker-border hard-shadow bg-surface hover:scale-105 transition-transform duration-300"
+                    height={120}
                     src="/logo.jpeg"
+                    width={120}
                 />
                 <div className="absolute -top-2 -right-4 bg-secondary-container text-on-secondary-container font-label-bold px-3 py-1 rounded-full sticker-border hard-shadow transform rotate-12 text-xs">
                     WIN BIG!
@@ -91,6 +103,8 @@ export default function RegistrationScreen({
                             ENTER YOUR NAME
                         </label>
                         <input
+                            autoComplete="name"
+                            maxLength={40}
                             className="w-full bg-surface-container-low border-2 border-on-background rounded-lg p-3 font-body-md text-on-surface placeholder:text-on-surface-variant/40 focus:ring-0 focus:border-secondary transition-colors hard-shadow h-12 outline-none"
                             id="playerName"
                             value={name}
@@ -111,6 +125,8 @@ export default function RegistrationScreen({
                             PHONE NUMBER
                         </label>
                         <input
+                            autoComplete="tel"
+                            maxLength={24}
                             className="w-full bg-surface-container-low border-2 border-on-background rounded-lg p-3 font-body-md text-on-surface placeholder:text-on-surface-variant/40 focus:ring-0 focus:border-secondary transition-colors hard-shadow h-12 outline-none"
                             id="playerPhone"
                             value={phone}
@@ -165,6 +181,30 @@ export default function RegistrationScreen({
                     </button>
                 </form>
             </div>
+
+            <section className="w-full overflow-hidden rounded-xl sticker-border-3 bg-white py-3 hard-shadow">
+                <div className="flex w-full justify-center px-4 pb-2">
+                    <p className="font-label-bold text-[11px] uppercase tracking-[0.16em] text-on-surface-variant">
+                        Sponsored By:
+                    </p>
+                </div>
+                <div className="sponsor-marquee flex w-max items-center gap-3 px-3">
+                    {[...SPONSORS, ...SPONSORS].map((sponsor, index) => (
+                        <div
+                            className="flex h-14 w-32 shrink-0 items-center justify-center rounded-lg border-2 border-on-background bg-surface-container-low px-2"
+                            key={`${sponsor.name}-${index}`}
+                        >
+                            <Image
+                                alt={`${sponsor.name} logo`}
+                                className="h-auto max-h-10 w-full object-contain"
+                                height={56}
+                                src={sponsor.logo}
+                                width={126}
+                            />
+                        </div>
+                    ))}
+                </div>
+            </section>
         </div>
     );
 }

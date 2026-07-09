@@ -30,6 +30,11 @@ export interface LeaderboardEntry {
     isCurrentUser?: boolean;
 }
 
+export interface DailyLeaderboard {
+    entries: LeaderboardEntry[];
+    userRank: number | null;
+}
+
 export interface ShotResult {
     target: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right' | 'center';
     keeperAction: 'dive-left' | 'dive-right' | 'stay-center' | 'jump-top-left' | 'jump-top-right';

@@ -2,16 +2,15 @@
 
 import React from "react";
 import Image from "next/image";
-import { INITIAL_LEADERBOARD } from "../data/leaderboard";
+import type { LeaderboardEntry } from "../types";
 
 interface CoachTipsScreenProps {
     onPlay: () => void;
     playerName: string;
+    topPlayer: LeaderboardEntry | null;
 }
 
-export default function CoachTipsScreen({ onPlay, playerName }: CoachTipsScreenProps) {
-    const topPlayer = INITIAL_LEADERBOARD.find((entry) => entry.rank === 1);
-
+export default function CoachTipsScreen({ onPlay, playerName, topPlayer }: CoachTipsScreenProps) {
     return (
         <div className="flex-grow pt-8 pb-32 px-4 flex flex-col gap-8 max-w-[600px] mx-auto w-full relative z-10">
             {/* Section 1: ROAD GUIDE */}
@@ -39,7 +38,6 @@ export default function CoachTipsScreen({ onPlay, playerName }: CoachTipsScreenP
                 </div>
             </section>
 
-            {/* Current leader */}
             {topPlayer && (
                 <section className="relative overflow-hidden rounded-xl sticker-border bg-inverse-surface px-5 py-4 hard-shadow-lg text-white">
                     <div className="absolute -right-5 -top-7 rotate-12 text-[88px] text-white/5">
@@ -51,7 +49,7 @@ export default function CoachTipsScreen({ onPlay, playerName }: CoachTipsScreenP
                         </div>
                         <div className="min-w-0 flex-grow">
                             <p className="font-label-bold text-[10px] uppercase tracking-[0.18em] text-white/55">
-                                Player to beat
+                                Player to beat today
                             </p>
                             <p className="truncate font-headline-lg-mobile text-xl font-black uppercase leading-tight text-white">
                                 {topPlayer.name}

@@ -1,12 +1,19 @@
 import "server-only";
 
-const supabaseUrl = "https://jgifsdsjsietkkjcuzor.supabase.co";
-const supabaseKey = "sb_publishable_W111kAuoLSPRyfGkv2cfAQ_yMqg-ESr";
+const supabaseUrl =
+  process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseKey =
+  process.env.SUPABASE_PUBLISHABLE_KEY ??
+  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
 
 export async function callSupabaseRpc<T>(
   functionName: string,
   parameters: Record<string, unknown>
 ): Promise<T> {
+  if (!supabaseUrl || !supabaseKey) {
+    throw new Error("Supabase environment variables are not configured.");
+  }
+
   const response = await fetch(
     `${supabaseUrl}/rest/v1/rpc/${functionName}`,
     {

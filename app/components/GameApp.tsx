@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { AppScreen, Player } from "../types";
+import { AppScreen, DailyLeaderboard, LeaderboardEntry, Player } from "../types";
 import RegistrationScreen from "./RegistrationScreen";
 import CoachTipsScreen from "./HowToPlay";
 import LeaderboardScreen from "./GameOver";
@@ -21,6 +21,13 @@ export default function GameApp({ token }: { token: string }) {
     credits: 0,
     country: DEFAULT_COUNTRY,
   });
+  const [dailyLeaderboard, setDailyLeaderboard] = useState<DailyLeaderboard>({
+    entries: [],
+    userRank: null,
+  });
+  const [topDailyPlayer, setTopDailyPlayer] = useState<LeaderboardEntry | null>(
+    null
+  );
 
   const handleRegister = async (
     name: string,
@@ -30,7 +37,7 @@ export default function GameApp({ token }: { token: string }) {
     const response = await fetch("/api/game/claim", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ token, name, phone }),
+      body: JSON.stringify({ token, name, phone, country }),
     });
 
     if (response.status === 409 || response.status === 404) {
@@ -42,6 +49,19 @@ export default function GameApp({ token }: { token: string }) {
     }
 
     setPlayer((previous) => ({ ...previous, name, phone, country }));
+    void fetch("/api/game/leaderboard", { cache: "no-store" })
+      .then((leaderboardResponse) => {
+        if (!leaderboardResponse.ok) return null;
+        return leaderboardResponse.json() as Promise<{
+          leaderboard?: LeaderboardEntry[];
+        }>;
+      })
+      .then((body) => {
+        setTopDailyPlayer(body?.leaderboard?.[0] ?? null);
+      })
+      .catch(() => {
+        setTopDailyPlayer(null);
+      });
     setScreen(AppScreen.COACH_TIPS);
   };
 
@@ -49,11 +69,20 @@ export default function GameApp({ token }: { token: string }) {
     setPlayer((previous) => ({ ...previous, points: pointsWon }));
 
     try {
-      await fetch("/api/game/score", {
+      const response = await fetch("/api/game/score", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ score: pointsWon }),
       });
+
+      if (response.ok) {
+        const body = (await response.json()) as {
+          leaderboard?: DailyLeaderboard;
+        };
+        if (body.leaderboard) {
+          setDailyLeaderboard(body.leaderboard);
+        }
+      }
     } finally {
       setScreen(AppScreen.LEADERBOARD);
     }
@@ -93,6 +122,7 @@ export default function GameApp({ token }: { token: string }) {
         {screen === AppScreen.COACH_TIPS && (
           <CoachTipsScreen
             playerName={player.name}
+            topPlayer={topDailyPlayer}
             onPlay={() => setScreen(AppScreen.GAMEPLAY)}
           />
         )}
@@ -104,8 +134,9 @@ export default function GameApp({ token }: { token: string }) {
         )}
         {screen === AppScreen.LEADERBOARD && (
           <LeaderboardScreen
-            userName={player.name}
+            leaderboard={dailyLeaderboard.entries}
             userPoints={player.points}
+            userRank={dailyLeaderboard.userRank}
           />
         )}
         {screen === AppScreen.CODE_USED && <QrScanned />}

@@ -42,6 +42,8 @@ type Lane = {
 
 const LANE_HEIGHT = 72;
 const COLUMN_COUNT = 5;
+const FLAG_BLOCK_RADIUS = 34;
+const RAFT_EDGE_PADDING = 18;
 
 function PowerUpIcon({ type }: { type: PowerUpType }) {
   if (type === 'double') {
@@ -376,6 +378,24 @@ export default function ChickenRoadGame({
     return left + (column + 0.5) * (playableWidth / COLUMN_COUNT);
   }, []);
 
+  const columnStep = useCallback((width: number) => {
+    const playableWidth = Math.min(width - 36, 520);
+    return playableWidth / COLUMN_COUNT;
+  }, []);
+
+  const nearestColumn = useCallback((x: number, width: number) => {
+    let closestColumn = 0;
+    let closestDistance = Number.POSITIVE_INFINITY;
+    for (let column = 0; column < COLUMN_COUNT; column += 1) {
+      const distance = Math.abs(columnX(column, width) - x);
+      if (distance < closestDistance) {
+        closestColumn = column;
+        closestDistance = distance;
+      }
+    }
+    return closestColumn;
+  }, [columnX]);
+
   const makeLane = useCallback((id: number, y: number, width: number): Lane => {
     const progress = lanesPassedRef.current;
     const section = sectionRef.current;
@@ -444,23 +464,24 @@ export default function ChickenRoadGame({
         };
       })
       : [];
-    const treeCount =
-      kind === 'grass'
-        ? 1 + Math.floor(Math.random() * Math.min(3, 1 + progress / 12))
-        : 0;
     const trees: number[] = [];
-    for (let treeIndex = 0; treeIndex < treeCount; treeIndex += 1) {
-      let treeX = 28 + Math.random() * Math.max(1, width - 56);
+    if (kind === 'grass') {
+      const maxFlags = Math.min(2, Math.max(1, Math.floor(1 + progress / 18)));
+      const treeCount = 1 + Math.floor(Math.random() * maxFlags);
+      const blockedColumns: number[] = [];
       let attempts = 0;
-      while (
-        attempts < 12 &&
-        (trees.some((existingX) => Math.abs(existingX - treeX) < 52) ||
-          (id === 0 && Math.abs(treeX - columnX(2, width)) < 58))
-      ) {
-        treeX = 28 + Math.random() * Math.max(1, width - 56);
+      while (blockedColumns.length < treeCount && attempts < 30) {
+        const column = Math.floor(Math.random() * COLUMN_COUNT);
+        const touchesAnotherFlag = blockedColumns.some(
+          (blockedColumn) => Math.abs(blockedColumn - column) <= 1
+        );
+        const blocksStartingSpot = id === 0 && column === 2;
+        if (!touchesAnotherFlag && !blocksStartingSpot) {
+          blockedColumns.push(column);
+        }
         attempts += 1;
       }
-      trees.push(treeX);
+      trees.push(...blockedColumns.map((column) => columnX(column, width)));
     }
     const availablePowerColumns = Array.from(
       { length: COLUMN_COUNT },
@@ -554,7 +575,7 @@ export default function ChickenRoadGame({
         (lane) =>
           lane.kind === 'grass' &&
           Math.abs(lane.y - y) < LANE_HEIGHT * 0.42 &&
-          lane.trees.some((treeX) => Math.abs(treeX - x) < 34)
+          lane.trees.some((treeX) => Math.abs(treeX - x) < FLAG_BLOCK_RADIUS)
       );
     const startHop = () => {
       state.hop = 1;
@@ -562,18 +583,18 @@ export default function ChickenRoadGame({
     };
 
     if (direction === 'left') {
-      const nextColumn = Math.max(0, state.playerColumn - 1);
-      const nextX = columnX(nextColumn, state.width);
+      const leftBoundary = columnX(0, state.width);
+      const nextX = Math.max(leftBoundary, state.targetX - columnStep(state.width));
       if (hasTreeAt(nextX, state.targetY)) return;
-      state.playerColumn = nextColumn;
+      state.playerColumn = nearestColumn(nextX, state.width);
       state.targetX = nextX;
       startHop();
       playHop(false);
     } else if (direction === 'right') {
-      const nextColumn = Math.min(COLUMN_COUNT - 1, state.playerColumn + 1);
-      const nextX = columnX(nextColumn, state.width);
+      const rightBoundary = columnX(COLUMN_COUNT - 1, state.width);
+      const nextX = Math.min(rightBoundary, state.targetX + columnStep(state.width));
       if (hasTreeAt(nextX, state.targetY)) return;
-      state.playerColumn = nextColumn;
+      state.playerColumn = nearestColumn(nextX, state.width);
       state.targetX = nextX;
       startHop();
       playHop(false);
@@ -662,10 +683,12 @@ export default function ChickenRoadGame({
     }
   }, [
     columnX,
+    columnStep,
     countryTheme.accent,
     countryTheme.primary,
     countryTheme.secondary,
     makeLane,
+    nearestColumn,
     playCheer,
     playHop,
     playWhistle,
@@ -1245,9 +1268,17 @@ export default function ChickenRoadGame({
               roundedRect(carX + 7, carY + 8, car.width - 14, 20, 6);
               context.fill();
               context.fillStyle = raftTheme.accent;
-              for (let seatX = carX + 18; seatX < carX + car.width - 8; seatX += 32) {
+              for (let seatX = carX + 22; seatX < carX + car.width - 14; seatX += 32) {
+                context.fillStyle = '#fff8d6';
+                context.strokeStyle = '#17202a';
+                context.lineWidth = 2;
                 context.beginPath();
-                context.arc(seatX, carY + 18, 6, 0, Math.PI * 2);
+                context.arc(seatX, carY + 18, 9, 0, Math.PI * 2);
+                context.fill();
+                context.stroke();
+                context.fillStyle = raftTheme.accent;
+                context.beginPath();
+                context.arc(seatX, carY + 18, 4, 0, Math.PI * 2);
                 context.fill();
               }
               context.strokeStyle = '#f8fafc';
@@ -1276,9 +1307,10 @@ export default function ChickenRoadGame({
               context.fill();
 
               const onThisLane = Math.abs(state.playerY - lane.y) < 17;
+              const supportX = state.hop > 0 ? state.targetX : state.playerX;
               const onThisLog =
-                state.playerX > carX - 10 &&
-                state.playerX < carX + car.width + 10;
+                supportX > carX - RAFT_EDGE_PADDING &&
+                supportX < carX + car.width + RAFT_EDGE_PADDING;
               if (
                 !deadRef.current &&
                 onThisLane &&
@@ -1290,6 +1322,7 @@ export default function ChickenRoadGame({
                   lane.speed * trafficSpeedMultiplier * lane.direction * dt;
                 state.playerX += carriedDistance;
                 state.targetX += carriedDistance;
+                state.playerColumn = nearestColumn(state.targetX, state.width);
                 if (
                   !ghostActive &&
                   (state.playerX < -24 || state.playerX > state.width + 24)
@@ -1608,6 +1641,7 @@ export default function ChickenRoadGame({
     countryTheme.primary,
     countryTheme.secondary,
     initialiseGame,
+    nearestColumn,
     playAlert,
     playCheer,
     playCrash,

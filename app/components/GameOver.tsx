@@ -1,37 +1,26 @@
 'use client'
 
-import React, { useMemo } from "react";
-import { getLeaderboard } from "../data/leaderboard";
+import React from "react";
+import type { LeaderboardEntry } from "../types";
 
 interface LeaderboardScreenProps {
+    leaderboard: LeaderboardEntry[];
     userPoints: number;
-    userName: string;
+    userRank: number | null;
 }
 
 export default function LeaderboardScreen({
+    leaderboard,
     userPoints,
-    userName,
+    userRank,
 }: LeaderboardScreenProps) {
-    const visibleCount = 7;
-
-    // Generate dynamic leaderboard based on current player points
-    const leaderboard = useMemo(() => {
-        return getLeaderboard(userPoints, userName);
-    }, [userPoints, userName]);
-
-    // Find the user's specific ranking from the generated leaderboard
-    const userRank = useMemo(() => {
-        const found = leaderboard.find((item) => item.isCurrentUser);
-        return found ? found.rank : 42;
-    }, [leaderboard]);
-
     return (
         <div className="pt-8 pb-32 px-4 max-w-2xl mx-auto space-y-8 w-full relative z-10">
             {/* Current Player Rank Card */}
             <section className="relative">
                 <div className="bg-primary-container p-6 rounded-xl border-4 border-on-surface neo-shadow-lg flex flex-col items-center justify-center text-center transform -rotate-1">
                     <h2 className="font-headline-xl text-3xl md:text-5xl text-on-primary-container leading-none uppercase font-black">
-                        RANK: #{userRank}
+                        {userRank ? `RANK: #${userRank}` : "RANK PENDING"}
                     </h2>
                     <div className="mt-4 bg-surface px-6 py-2.5 rounded-full border-2 border-on-surface inline-block">
                         <span className="font-headline-lg-mobile text-primary text-lg font-black tracking-wide">
@@ -48,12 +37,20 @@ export default function LeaderboardScreen({
                         Top Road Crossers
                     </h3>
                     <span className="font-label-bold text-xs text-outline uppercase tracking-wider">
-                        Live standings
+                        Today
                     </span>
                 </div>
 
                 <div className="space-y-3.5">
-                    {leaderboard.slice(0, visibleCount).map((entry, index) => {
+                    {leaderboard.length === 0 && (
+                        <div className="rounded-xl border-4 border-on-surface bg-surface p-5 text-center neo-shadow">
+                            <p className="font-headline-lg-mobile text-lg font-black uppercase text-on-surface">
+                                Daily standings unavailable
+                            </p>
+                        </div>
+                    )}
+
+                    {leaderboard.map((entry, index) => {
                         // Background classes for 1st, 2nd, 3rd, and normal rows
                         let rowBgClass = "bg-surface";
                         let rankBadgeBg = "bg-on-surface text-outline";

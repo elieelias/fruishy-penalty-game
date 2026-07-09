@@ -60,6 +60,7 @@
   --animate-float: float 3s ease-in-out infinite;
   --animate-float-delayed: float-delayed 3.5s ease-in-out infinite;
   --animate-float-more: float-more 4s ease-in-out infinite;
+  --animate-sponsor-marquee: sponsor-marquee 18s linear infinite;
 }
 
 /* Custom animations */
@@ -103,6 +104,24 @@
   100% {
     transform: translateY(0px) rotate(0deg);
   }
+}
+
+@keyframes sponsor-marquee {
+  0% {
+    transform: translateX(0);
+  }
+
+  100% {
+    transform: translateX(calc(-50% - 6px));
+  }
+}
+
+.sponsor-marquee {
+  animation: var(--animate-sponsor-marquee);
+}
+
+.sponsor-marquee:hover {
+  animation-play-state: paused;
 }
 
 /* Base style resets and customizations */
