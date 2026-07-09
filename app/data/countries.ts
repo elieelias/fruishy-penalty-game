@@ -1,11 +1,10 @@
 export type CountryId =
   | 'france'
   | 'argentina'
-  | 'morocco'
   | 'spain'
   | 'belgium'
-  | 'brazil'
-  | 'mexico'
+  | 'england'
+  | 'norway'
   | 'switzerland';
 
 export type CountryTheme = {
@@ -20,11 +19,10 @@ export type CountryTheme = {
 export const COUNTRY_THEMES: CountryTheme[] = [
   { id: 'france', name: 'France', flag: '🇫🇷', primary: '#1f3c88', secondary: '#ffffff', accent: '#ed2939' },
   { id: 'argentina', name: 'Argentina', flag: '🇦🇷', primary: '#75aadb', secondary: '#ffffff', accent: '#f6b40e' },
-  { id: 'morocco', name: 'Morocco', flag: '🇲🇦', primary: '#c1272d', secondary: '#ffffff', accent: '#006233' },
   { id: 'spain', name: 'Spain', flag: '🇪🇸', primary: '#aa151b', secondary: '#f1bf00', accent: '#ffffff' },
   { id: 'belgium', name: 'Belgium', flag: '🇧🇪', primary: '#1b1b1b', secondary: '#fdda24', accent: '#ef3340' },
-  { id: 'brazil', name: 'Brazil', flag: '🇧🇷', primary: '#ffdf00', secondary: '#009c3b', accent: '#002776' },
-  { id: 'mexico', name: 'Mexico', flag: '🇲🇽', primary: '#006847', secondary: '#ffffff', accent: '#ce1126' },
+  { id: 'england', name: 'England', flag: '🏴󠁧󠁢󠁥󠁮󠁧󠁿', primary: '#ffffff', secondary: '#cf142b', accent: '#1f3c88' },
+  { id: 'norway', name: 'Norway', flag: '🇳🇴', primary: '#ba0c2f', secondary: '#ffffff', accent: '#00205b' },
   { id: 'switzerland', name: 'Switzerland', flag: '🇨🇭', primary: '#d52b1e', secondary: '#ffffff', accent: '#202020' },
 ];
 

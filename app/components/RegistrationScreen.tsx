@@ -182,24 +182,24 @@ export default function RegistrationScreen({
                 </form>
             </div>
 
-            <section className="w-full overflow-hidden rounded-xl sticker-border-3 bg-white py-3 hard-shadow">
+            <section className="w-full overflow-hidden rounded-xl sticker-border-3 bg-white py-2.5 hard-shadow">
                 <div className="flex w-full justify-center px-4 pb-2">
-                    <p className="font-label-bold text-[11px] uppercase tracking-[0.16em] text-on-surface-variant">
+                    <p className="font-label-bold text-[10px] uppercase tracking-[0.14em] text-on-surface-variant">
                         Sponsored By:
                     </p>
                 </div>
-                <div className="sponsor-marquee flex w-max items-center gap-3 px-3">
+                <div className="sponsor-marquee flex w-max items-center gap-2 px-2">
                     {[...SPONSORS, ...SPONSORS].map((sponsor, index) => (
                         <div
-                            className="flex h-14 w-32 shrink-0 items-center justify-center rounded-lg border-2 border-on-background bg-surface-container-low px-2"
+                            className="flex h-14 w-16 shrink-0 items-center justify-center rounded-md border-2 border-on-background bg-surface-container-low p-1"
                             key={`${sponsor.name}-${index}`}
                         >
                             <Image
                                 alt={`${sponsor.name} logo`}
-                                className="h-auto max-h-10 w-full object-contain"
-                                height={56}
+                                className="h-full w-full object-contain"
+                                height={64}
                                 src={sponsor.logo}
-                                width={126}
+                                width={64}
                             />
                         </div>
                     ))}
