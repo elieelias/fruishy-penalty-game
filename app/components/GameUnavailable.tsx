@@ -6,7 +6,7 @@ export default function GameUnavailable() {
           Game temporarily unavailable
         </h1>
         <p className="mt-4 font-body-md text-on-surface-variant">
-          Your QR code has not been used. Please try again in a moment.
+          We could not check this QR code right now. Please try again in a moment.
         </p>
       </div>
     </main>

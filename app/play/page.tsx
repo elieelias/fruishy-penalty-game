@@ -22,7 +22,8 @@ export default async function PlayPage({
       "is_game_token_available",
       { p_qr_token: token }
     );
-  } catch {
+  } catch (error) {
+    console.error(error);
     return <GameUnavailable />;
   }
 
