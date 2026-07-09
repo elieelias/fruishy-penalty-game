@@ -1,10 +1,17 @@
 import "server-only";
 
+const defaultSupabaseUrl = "https://jgifsdsjsietkkjcuzor.supabase.co";
+const defaultSupabasePublishableKey =
+  "sb_publishable_W111kAuoLSPRyfGkv2cfAQ_yMqg-ESr";
+
 const supabaseUrl =
-  process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL;
+  process.env.SUPABASE_URL ??
+  process.env.NEXT_PUBLIC_SUPABASE_URL ??
+  defaultSupabaseUrl;
 const supabaseKey =
   process.env.SUPABASE_PUBLISHABLE_KEY ??
-  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ??
+  defaultSupabasePublishableKey;
 
 export async function callSupabaseRpc<T>(
   functionName: string,
