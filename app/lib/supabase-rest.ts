@@ -4,14 +4,18 @@ const defaultSupabaseUrl = "https://jgifsdsjsietkkjcuzor.supabase.co";
 const defaultSupabasePublishableKey =
   "sb_publishable_W111kAuoLSPRyfGkv2cfAQ_yMqg-ESr";
 
-const supabaseUrl =
+const supabaseUrl = (
   process.env.SUPABASE_URL ??
   process.env.NEXT_PUBLIC_SUPABASE_URL ??
-  defaultSupabaseUrl;
-const supabaseKey =
+  defaultSupabaseUrl
+)
+  .trim()
+  .replace(/\/+$/, "");
+const supabaseKey = (
   process.env.SUPABASE_PUBLISHABLE_KEY ??
   process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ??
-  defaultSupabasePublishableKey;
+  defaultSupabasePublishableKey
+).trim();
 
 export async function callSupabaseRpc<T>(
   functionName: string,
@@ -36,7 +40,10 @@ export async function callSupabaseRpc<T>(
   );
 
   if (!response.ok) {
-    throw new Error(`Supabase RPC failed with status ${response.status}.`);
+    const message = await response.text();
+    throw new Error(
+      `Supabase RPC ${functionName} failed with status ${response.status}: ${message}`
+    );
   }
 
   return (await response.json()) as T;
