@@ -8,20 +8,18 @@ import {
     DEFAULT_COUNTRY,
 } from "../data/countries";
 
-import 'material-symbols/outlined.css';
-
 interface RegistrationScreenProps {
     onRegister: (name: string, phone: string, country: CountryId) => Promise<void>;
 }
 
 const SPONSORS = [
-    { name: "Saturdays", logo: "/sponsors/saturdays.svg" },
-    { name: "Frozen Flame", logo: "/sponsors/frozenflame.svg" },
-    { name: "Junkies", logo: "/sponsors/junkies.svg" },
-    { name: "Nerdy Tech", logo: "/sponsors/nerdytech.svg" },
-    { name: "The Buzz Bar", logo: "/sponsors/thebuzzbar.svg" },
-    { name: "Woudin", logo: "/sponsors/woudin.svg" },
-    { name: "Yasmina Park", logo: "/sponsors/yasminapark.svg" },
+    { name: "Saturdays", logo: "/sponsors/saturdays.webp" },
+    { name: "Frozen Flame", logo: "/sponsors/frozenflame.webp" },
+    { name: "Junkies", logo: "/sponsors/junkies.webp" },
+    { name: "Nerdy Tech", logo: "/sponsors/nerdytech.webp" },
+    { name: "The Buzz Bar", logo: "/sponsors/thebuzzbar.webp" },
+    { name: "Woudin", logo: "/sponsors/woudin.webp" },
+    { name: "Yasmina Park", logo: "/sponsors/yasminapark.webp" },
 ];
 
 export default function RegistrationScreen({
@@ -162,8 +160,8 @@ export default function RegistrationScreen({
                                     </option>
                                 ))}
                             </select>
-                            <span className="material-symbols-outlined pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant">
-                                expand_more
+                            <span aria-hidden="true" className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xl font-black text-on-surface-variant">
+                                ⌄
                             </span>
                         </div>
                     </div>
@@ -175,7 +173,7 @@ export default function RegistrationScreen({
                     >
                         <span className="relative z-10 flex items-center justify-center gap-2">
                             {isSubmitting ? "CHECKING CODE..." : "START GAME"}{" "}
-                            <span className="material-symbols-outlined select-none text-xl">sports_score</span>
+                            <span aria-hidden="true" className="select-none text-xl">⚑</span>
                         </span>
                         <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
                     </button>

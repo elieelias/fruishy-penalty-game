@@ -47,7 +47,7 @@ export default function CoachTipsScreen({
             {topPlayer && (
                 <section className="relative overflow-hidden rounded-xl sticker-border bg-inverse-surface px-5 py-4 hard-shadow-lg text-white">
                     <div className="absolute -right-5 -top-7 rotate-12 text-[88px] text-white/5">
-                        <span className="material-symbols-outlined text-[88px]">emoji_events</span>
+                        <span aria-hidden="true" className="text-[72px]">🏆</span>
                     </div>
                     <div className="relative flex items-center gap-4">
                         <div className="flex h-14 w-14 flex-shrink-0 -rotate-3 items-center justify-center rounded-lg border-3 border-white bg-tertiary-fixed font-headline-lg-mobile text-2xl font-black text-on-tertiary-fixed">
@@ -88,8 +88,8 @@ export default function CoachTipsScreen({
                         <span className="font-headline-lg-mobile text-3xl font-black text-secondary">
                             01
                         </span>
-                        <span className="material-symbols-outlined text-3xl text-secondary select-none">
-                            swipe
+                        <span aria-hidden="true" className="select-none text-3xl text-secondary">
+                            ↕
                         </span>
                         <div>
                             <h3 className="font-headline-lg-mobile text-lg font-black uppercase leading-tight text-on-surface">
@@ -110,8 +110,8 @@ export default function CoachTipsScreen({
                         <span className="font-headline-lg-mobile text-3xl font-black text-tertiary">
                             02
                         </span>
-                        <span className="material-symbols-outlined text-3xl text-tertiary select-none">
-                            directions_car
+                        <span aria-hidden="true" className="select-none text-2xl">
+                            🚗
                         </span>
                         <div>
                             <h3 className="font-headline-lg-mobile text-lg font-black uppercase leading-tight text-on-surface">
@@ -132,8 +132,8 @@ export default function CoachTipsScreen({
                         <span className="font-headline-lg-mobile text-3xl font-black text-primary">
                             03
                         </span>
-                        <span className="material-symbols-outlined text-3xl text-primary select-none">
-                            water
+                        <span aria-hidden="true" className="select-none text-3xl text-primary">
+                            ≋
                         </span>
                         <div>
                             <h3 className="font-headline-lg-mobile text-lg font-black uppercase leading-tight text-on-surface">
@@ -154,8 +154,8 @@ export default function CoachTipsScreen({
                         <span className="font-headline-lg-mobile text-3xl font-black text-red-500">
                             04
                         </span>
-                        <span className="material-symbols-outlined select-none text-3xl text-red-500">
-                            train
+                        <span aria-hidden="true" className="select-none text-2xl">
+                            🚆
                         </span>
                         <div>
                             <h3 className="font-headline-lg-mobile text-lg font-black uppercase leading-tight text-on-surface">
@@ -185,11 +185,11 @@ export default function CoachTipsScreen({
                 <div className="grid grid-cols-3 overflow-hidden rounded-xl sticker-border bg-inverse-surface text-white hard-shadow">
                     <div className="flex flex-col items-center gap-1.5 px-2 py-4 text-center">
                         <div className="relative h-8 w-10 text-yellow-300">
-                            <span className="material-symbols-outlined absolute left-0 top-1 text-2xl">
-                                sports_soccer
+                            <span aria-hidden="true" className="absolute left-0 top-1 text-xl">
+                                ⚽
                             </span>
-                            <span className="material-symbols-outlined absolute right-0 top-0 text-2xl">
-                                sports_soccer
+                            <span aria-hidden="true" className="absolute right-0 top-0 text-xl">
+                                ⚽
                             </span>
                         </div>
                         <p className="font-headline-lg-mobile text-xs font-black uppercase">
@@ -198,8 +198,8 @@ export default function CoachTipsScreen({
                     </div>
 
                     <div className="flex flex-col items-center gap-1.5 border-x-2 border-white/15 px-2 py-4 text-center">
-                        <span className="material-symbols-outlined text-3xl text-purple-300">
-                            shield
+                        <span aria-hidden="true" className="text-2xl text-purple-300">
+                            🛡
                         </span>
                         <p className="font-headline-lg-mobile text-xs font-black uppercase">
                             Safe shield<br /><span lang="ar" dir="rtl">درع حماية</span>
@@ -207,8 +207,8 @@ export default function CoachTipsScreen({
                     </div>
 
                     <div className="flex flex-col items-center gap-1.5 px-2 py-4 text-center">
-                        <span className="material-symbols-outlined text-3xl text-cyan-300">
-                            timer
+                        <span aria-hidden="true" className="text-2xl text-cyan-300">
+                            ⏱
                         </span>
                         <p className="font-headline-lg-mobile text-xs font-black uppercase">
                             Slow traffic<br /><span lang="ar" dir="rtl">إبطاء السيارات</span>
@@ -223,7 +223,7 @@ export default function CoachTipsScreen({
                 className="bg-primary-container hover:bg-orange-500 text-white py-5 rounded-xl sticker-border hard-shadow-lg font-headline-lg-mobile text-2xl uppercase italic hover:scale-[1.02] active:translate-y-1 active:shadow-none transition-all mt-4 cursor-pointer text-center flex items-center justify-center gap-2 shadow-[4px_4px_0_0_#1c1b1b]"
             >
                 <span>GOT IT! LET&apos;S PLAY <span className="block text-base not-italic" lang="ar" dir="rtl">فهمت، لنبدأ اللعب!</span></span>
-                <span className="material-symbols-outlined select-none text-2xl">directions_run</span>
+                <span aria-hidden="true" className="select-none text-2xl">➜</span>
             </button>
         </div>
     );

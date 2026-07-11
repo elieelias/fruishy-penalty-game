@@ -3,6 +3,7 @@ import "server-only";
 const defaultSupabaseUrl = "https://jgifsdsjsietkkjcuzor.supabase.co";
 const defaultSupabasePublishableKey =
   "sb_publishable_W111kAuoLSPRyfGkv2cfAQ_yMqg-ESr";
+const RPC_TIMEOUT_MS = 8_000;
 
 function cleanEnvValue(value: string | undefined) {
   return value?.trim().replace(/^['"]|['"]$/g, "");
@@ -43,9 +44,11 @@ export async function callSupabaseRpc<T>(
   }
 
   const errors: string[] = [];
+  const deadline = Date.now() + RPC_TIMEOUT_MS;
 
   for (const client of rpcClients) {
     try {
+      const remainingMs = Math.max(1, deadline - Date.now());
       const response = await fetch(
         `${client.url}/rest/v1/rpc/${functionName}`,
         {
@@ -57,6 +60,7 @@ export async function callSupabaseRpc<T>(
           },
           body: JSON.stringify(parameters),
           cache: "no-store",
+          signal: AbortSignal.timeout(remainingMs),
         }
       );
 

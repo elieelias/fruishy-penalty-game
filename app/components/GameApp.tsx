@@ -1,15 +1,24 @@
 "use client";
 
 import React, { useState } from "react";
+import dynamic from "next/dynamic";
 import { AppScreen, DailyLeaderboard, LeaderboardEntry, Player } from "../types";
 import RegistrationScreen from "./RegistrationScreen";
 import CoachTipsScreen from "./HowToPlay";
 import LeaderboardScreen from "./GameOver";
-import ChickenRoadGame from "./PenaltyGame";
 import QrScanned from "./QrScanned";
 import { CountryId, DEFAULT_COUNTRY } from "../data/countries";
 
-import "material-symbols/outlined.css";
+const ChickenRoadGame = dynamic(() => import("./PenaltyGame"), {
+  loading: () => (
+    <div className="flex min-h-screen w-full items-center justify-center bg-[#80d34a] text-center">
+      <p className="rounded-xl border-2 border-white/40 bg-black/55 px-6 py-4 font-black uppercase text-white shadow-xl">
+        Preparing the game…<br />
+        <span className="text-sm" dir="rtl" lang="ar">جارٍ تجهيز اللعبة…</span>
+      </p>
+    </div>
+  ),
+});
 
 export default function GameApp({ token, testFlow = false }: { token: string; testFlow?: boolean }) {
   const useNewFlow = testFlow;
@@ -39,6 +48,7 @@ export default function GameApp({ token, testFlow = false }: { token: string; te
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ token, name, phone, country }),
+      signal: AbortSignal.timeout(10_000),
     });
 
     if (response.status === 409 || response.status === 404) {
@@ -74,6 +84,7 @@ export default function GameApp({ token, testFlow = false }: { token: string; te
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ score: pointsWon }),
+        signal: AbortSignal.timeout(10_000),
       });
 
       if (response.ok) {

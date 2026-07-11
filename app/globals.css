@@ -165,10 +165,6 @@ body {
   -webkit-text-stroke: 1px black;
 }
 
-.material-symbols-outlined {
-  font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-}
-
 /* Net / Goal interactive target animations */
 .target-glow {
   transition: all 0.2s ease-in-out;
