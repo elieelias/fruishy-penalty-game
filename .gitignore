@@ -20,6 +20,9 @@
 # production
 /build
 
+# generated QR artifacts (uploaded separately, never deployed with the app)
+/artifacts/extra-token-qrs/
+
 # misc
 .DS_Store
 *.pem

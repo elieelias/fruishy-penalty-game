@@ -12,7 +12,7 @@ const serviceKey =
 const bucket = process.env.SUPABASE_QR_BUCKET ?? "extra-token-qrs";
 const qrDir =
   process.env.EXTRA_TOKEN_QR_DIR ??
-  path.join(process.cwd(), "public", "extra-token-qrs");
+  path.join(process.cwd(), "artifacts", "extra-token-qrs");
 
 if (!supabaseUrl || !serviceKey) {
   throw new Error(
