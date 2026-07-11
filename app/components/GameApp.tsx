@@ -132,7 +132,6 @@ export default function GameApp({ token, testFlow = false }: { token: string; te
           <ChickenRoadGame
             country={player.country}
             onGameFinished={handleGameFinished}
-            showControls={useNewFlow}
           />
         )}
         {screen === AppScreen.LEADERBOARD && (

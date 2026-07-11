@@ -74,33 +74,12 @@ function PowerUpIcon({ type }: { type: PowerUpType }) {
   );
 }
 
-function MoveArrow({ direction }: { direction: 'up' | 'down' | 'left' | 'right' }) {
-  const rotation = {
-    up: '',
-    right: 'rotate-90',
-    down: 'rotate-180',
-    left: '-rotate-90',
-  }[direction];
-
-  return (
-    <svg
-      aria-hidden="true"
-      className={`h-8 w-8 fill-current ${rotation}`}
-      viewBox="0 0 24 24"
-    >
-      <path d="M12 3 4.5 11h4.25v10h6.5V11h4.25L12 3Z" />
-    </svg>
-  );
-}
-
 export default function ChickenRoadGame({
   country,
   onGameFinished,
-  showControls = false,
 }: {
   country: CountryId;
   onGameFinished: (score: number) => void;
-  showControls?: boolean;
 }) {
   const countryTheme = getCountryTheme(country);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -1764,54 +1743,6 @@ export default function ChickenRoadGame({
         </div>
       )}
 
-      {showControls && !dead && (
-        <div
-          aria-label="Movement controls"
-          className="pointer-events-none absolute inset-x-0 bottom-[max(1rem,env(safe-area-inset-bottom))] z-20 h-32"
-          role="group"
-        >
-          <button
-            type="button"
-            onPointerDown={(event) => event.stopPropagation()}
-            onPointerUp={(event) => event.stopPropagation()}
-            onClick={() => move('forward')}
-            className="pointer-events-auto absolute bottom-16 left-1/2 flex h-12 w-12 -translate-x-1/2 cursor-pointer touch-manipulation items-center justify-center rounded-full border border-white/15 bg-black/20 text-white/80 shadow-lg backdrop-blur-sm transition-all hover:bg-black/30 active:scale-95 active:bg-black/40"
-            aria-label="Move Forward"
-          >
-            <MoveArrow direction="up" />
-          </button>
-          <button
-            type="button"
-            onPointerDown={(event) => event.stopPropagation()}
-            onPointerUp={(event) => event.stopPropagation()}
-            onClick={() => move('backward')}
-            className="pointer-events-auto absolute bottom-0 left-1/2 flex h-12 w-12 -translate-x-1/2 cursor-pointer touch-manipulation items-center justify-center rounded-full border border-white/15 bg-black/20 text-white/80 shadow-lg backdrop-blur-sm transition-all hover:bg-black/30 active:scale-95 active:bg-black/40"
-            aria-label="Move Backward"
-          >
-            <MoveArrow direction="down" />
-          </button>
-          <button
-            type="button"
-            onPointerDown={(event) => event.stopPropagation()}
-            onPointerUp={(event) => event.stopPropagation()}
-            onClick={() => move('left')}
-            className="pointer-events-auto absolute bottom-1 left-5 flex h-16 w-16 cursor-pointer touch-manipulation items-center justify-center rounded-full border border-white/15 bg-black/20 text-white/80 shadow-lg backdrop-blur-sm transition-all hover:bg-black/30 active:scale-95 active:bg-black/40 sm:left-8"
-            aria-label="Move Left"
-          >
-            <MoveArrow direction="left" />
-          </button>
-          <button
-            type="button"
-            onPointerDown={(event) => event.stopPropagation()}
-            onPointerUp={(event) => event.stopPropagation()}
-            onClick={() => move('right')}
-            className="pointer-events-auto absolute bottom-1 right-5 flex h-16 w-16 cursor-pointer touch-manipulation items-center justify-center rounded-full border border-white/15 bg-black/20 text-white/80 shadow-lg backdrop-blur-sm transition-all hover:bg-black/30 active:scale-95 active:bg-black/40 sm:right-8"
-            aria-label="Move Right"
-          >
-            <MoveArrow direction="right" />
-          </button>
-        </div>
-      )}
     </div>
   );
 }

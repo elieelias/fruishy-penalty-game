@@ -89,17 +89,17 @@ export default function CoachTipsScreen({
                             01
                         </span>
                         <span className="material-symbols-outlined text-3xl text-secondary select-none">
-                            gamepad
+                            swipe
                         </span>
                         <div>
                             <h3 className="font-headline-lg-mobile text-lg font-black uppercase leading-tight text-on-surface">
-                                Move in all 4 directions
+                                Tap &amp; swipe to move
                             </h3>
                             <p className="mt-1 font-body-md text-xs font-semibold leading-snug text-on-surface-variant">
-                                Use ↑ ↓ ← → to move forward, backward, left, and right.
+                                Tap or swipe up to go forward. Swipe left or right to move sideways, and down to go backward.
                             </p>
                             <p className="mt-1 text-right font-body-md text-sm font-bold leading-snug text-on-surface" dir="rtl" lang="ar">
-                                استخدم أزرار ↑ ↓ ← → للتحرّك إلى الأمام والخلف واليمين واليسار.
+                                انقر أو اسحب للأعلى للتقدّم، اسحب يميناً أو يساراً للتحرّك جانبياً، واسحب للأسفل للرجوع.
                             </p>
                         </div>
                     </div>
