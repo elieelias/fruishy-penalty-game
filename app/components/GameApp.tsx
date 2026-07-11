@@ -11,7 +11,8 @@ import { CountryId, DEFAULT_COUNTRY } from "../data/countries";
 
 import "material-symbols/outlined.css";
 
-export default function GameApp({ token }: { token: string }) {
+export default function GameApp({ token, testFlow = false }: { token: string; testFlow?: boolean }) {
+  const useNewFlow = testFlow;
   const [screen, setScreen] = useState<AppScreen>(AppScreen.REGISTRATION);
   const [player, setPlayer] = useState<Player>({
     name: "",
@@ -123,6 +124,7 @@ export default function GameApp({ token }: { token: string }) {
           <CoachTipsScreen
             playerName={player.name}
             topPlayer={topDailyPlayer}
+            showRoadGuide={!useNewFlow}
             onPlay={() => setScreen(AppScreen.GAMEPLAY)}
           />
         )}
@@ -130,6 +132,7 @@ export default function GameApp({ token }: { token: string }) {
           <ChickenRoadGame
             country={player.country}
             onGameFinished={handleGameFinished}
+            showControls={useNewFlow}
           />
         )}
         {screen === AppScreen.LEADERBOARD && (

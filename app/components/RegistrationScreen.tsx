@@ -112,7 +112,7 @@ export default function RegistrationScreen({
                                 setName(e.target.value);
                                 setErrorMsg("");
                             }}
-                            placeholder="e.g. Champion Charlie"
+                            placeholder="e.g. David Yaacoub"
                             type="text"
                         />
                     </div>

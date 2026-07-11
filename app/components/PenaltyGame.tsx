@@ -77,9 +77,11 @@ function PowerUpIcon({ type }: { type: PowerUpType }) {
 export default function ChickenRoadGame({
   country,
   onGameFinished,
+  showControls = false,
 }: {
   country: CountryId;
   onGameFinished: (score: number) => void;
+  showControls?: boolean;
 }) {
   const countryTheme = getCountryTheme(country);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -1739,6 +1741,57 @@ export default function ChickenRoadGame({
         <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-red-950/25">
           <div className="-rotate-3 rounded-2xl border-4 border-white bg-red-500 px-8 py-4 text-5xl font-black italic text-white shadow-2xl">
             CRASH!
+          </div>
+        </div>
+      )}
+
+      {showControls && !dead && (
+        <div
+          aria-label="Movement controls"
+          className="absolute bottom-[max(1rem,env(safe-area-inset-bottom))] left-1/2 z-20 flex -translate-x-1/2 flex-col items-center gap-1.5 rounded-2xl border border-white/20 bg-black/40 p-3 shadow-2xl backdrop-blur-md"
+          role="group"
+        >
+          <button
+            type="button"
+            onPointerDown={(event) => event.stopPropagation()}
+            onPointerUp={(event) => event.stopPropagation()}
+            onClick={() => move('forward')}
+            className="flex h-14 w-14 cursor-pointer touch-manipulation items-center justify-center rounded-xl border border-white/20 bg-white/20 text-white shadow-md transition-all hover:bg-white/30 active:scale-95 active:bg-white/40"
+            aria-label="Move Forward"
+          >
+            <span className="material-symbols-outlined select-none text-3xl">arrow_upward</span>
+          </button>
+          <div className="flex gap-2.5">
+            <button
+              type="button"
+              onPointerDown={(event) => event.stopPropagation()}
+              onPointerUp={(event) => event.stopPropagation()}
+              onClick={() => move('left')}
+              className="flex h-14 w-14 cursor-pointer touch-manipulation items-center justify-center rounded-xl border border-white/20 bg-white/20 text-white shadow-md transition-all hover:bg-white/30 active:scale-95 active:bg-white/40"
+              aria-label="Move Left"
+            >
+              <span className="material-symbols-outlined select-none text-3xl">arrow_back</span>
+            </button>
+            <button
+              type="button"
+              onPointerDown={(event) => event.stopPropagation()}
+              onPointerUp={(event) => event.stopPropagation()}
+              onClick={() => move('backward')}
+              className="flex h-14 w-14 cursor-pointer touch-manipulation items-center justify-center rounded-xl border border-white/20 bg-white/20 text-white shadow-md transition-all hover:bg-white/30 active:scale-95 active:bg-white/40"
+              aria-label="Move Backward"
+            >
+              <span className="material-symbols-outlined select-none text-3xl">arrow_downward</span>
+            </button>
+            <button
+              type="button"
+              onPointerDown={(event) => event.stopPropagation()}
+              onPointerUp={(event) => event.stopPropagation()}
+              onClick={() => move('right')}
+              className="flex h-14 w-14 cursor-pointer touch-manipulation items-center justify-center rounded-xl border border-white/20 bg-white/20 text-white shadow-md transition-all hover:bg-white/30 active:scale-95 active:bg-white/40"
+              aria-label="Move Right"
+            >
+              <span className="material-symbols-outlined select-none text-3xl">arrow_forward</span>
+            </button>
           </div>
         </div>
       )}

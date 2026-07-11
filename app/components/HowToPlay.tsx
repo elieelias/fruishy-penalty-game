@@ -8,35 +8,41 @@ interface CoachTipsScreenProps {
     onPlay: () => void;
     playerName: string;
     topPlayer: LeaderboardEntry | null;
+    showRoadGuide?: boolean;
 }
 
-export default function CoachTipsScreen({ onPlay, playerName, topPlayer }: CoachTipsScreenProps) {
+export default function CoachTipsScreen({
+    onPlay,
+    playerName,
+    topPlayer,
+    showRoadGuide = true,
+}: CoachTipsScreenProps) {
     return (
         <div className="flex-grow pt-8 pb-32 px-4 flex flex-col gap-8 max-w-[600px] mx-auto w-full relative z-10">
-            {/* Section 1: ROAD GUIDE */}
-            <section className="flex flex-col gap-4">
-                <h2 className="font-headline-lg-mobile text-3xl uppercase italic text-primary select-none drop-shadow-sm">
-                    Road Guide
-                </h2>
-                <div className="flex items-end gap-2">
-                    <div className="w-28 h-36 md:w-32 md:h-40 flex-shrink-0 sticker-border rounded-xl bg-primary-container overflow-hidden hard-shadow">
-                        <Image
-                            alt="Road guide chicken"
-                            className="w-full h-full object-cover"
-                            src="/game-assets/road-guide.webp"
-                            width={128}
-                            height={160}
-                        />
+            {showRoadGuide && (
+                <section className="flex flex-col gap-4">
+                    <h2 className="font-headline-lg-mobile text-3xl uppercase italic text-primary select-none drop-shadow-sm">
+                        Road Guide
+                    </h2>
+                    <div className="flex items-end gap-2">
+                        <div className="w-28 h-36 md:w-32 md:h-40 flex-shrink-0 sticker-border rounded-xl bg-primary-container overflow-hidden hard-shadow">
+                            <Image
+                                alt="Road guide chicken"
+                                className="w-full h-full object-cover"
+                                src="/game-assets/road-guide.webp"
+                                width={128}
+                                height={160}
+                            />
+                        </div>
+                        <div className="relative bg-white sticker-border rounded-2xl p-4 hard-shadow mb-4 flex-grow">
+                            <p className="font-label-bold text-[13px] md:text-sm uppercase text-on-surface leading-tight select-none">
+                                &ldquo;READY, {playerName || "CROSSER"}? KEEP MOVING, WATCH EVERY LANE, AND USE SAFE GRASS TO PLAN YOUR NEXT HOP!&rdquo;
+                            </p>
+                            <div className="absolute -left-2 bottom-4 w-4 h-4 bg-white border-l-4 border-b-4 border-on-background rotate-45"></div>
+                        </div>
                     </div>
-                    <div className="relative bg-white sticker-border rounded-2xl p-4 hard-shadow mb-4 flex-grow">
-                        <p className="font-label-bold text-[13px] md:text-sm uppercase text-on-surface leading-tight select-none">
-                            &ldquo;READY, {playerName || "CROSSER"}? KEEP MOVING, WATCH EVERY LANE, AND USE SAFE GRASS TO PLAN YOUR NEXT HOP!&rdquo;
-                        </p>
-                        {/* Speech Bubble Tail */}
-                        <div className="absolute -left-2 bottom-4 w-4 h-4 bg-white border-l-4 border-b-4 border-on-background rotate-45"></div>
-                    </div>
-                </div>
-            </section>
+                </section>
+            )}
 
             {topPlayer && (
                 <section className="relative overflow-hidden rounded-xl sticker-border bg-inverse-surface px-5 py-4 hard-shadow-lg text-white">
