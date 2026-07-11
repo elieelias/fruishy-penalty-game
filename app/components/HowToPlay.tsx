@@ -73,69 +73,99 @@ export default function CoachTipsScreen({
                 </section>
             )}
 
-            {/* Instructions read as one guide rather than three buttons */}
             <section className="flex flex-col gap-3">
                 <div className="flex items-end justify-between px-1">
                     <h2 className="font-headline-lg-mobile text-2xl font-black uppercase italic text-on-surface">
-                        How to cross
+                        How to play <span className="text-primary">/ طريقة اللعب</span>
                     </h2>
                     <span className="font-label-bold text-[10px] uppercase tracking-[0.16em] text-outline">
-                        3 quick rules
+                        4 quick rules<br /><span lang="ar" dir="rtl">٤ قواعد سريعة</span>
                     </span>
                 </div>
 
                 <div className="overflow-hidden rounded-xl sticker-border bg-white hard-shadow-lg">
-                    <div className="grid grid-cols-[42px_48px_1fr] items-center gap-3 px-4 py-4">
+                    <div className="grid grid-cols-[34px_42px_1fr] items-start gap-3 px-4 py-4">
                         <span className="font-headline-lg-mobile text-3xl font-black text-secondary">
                             01
                         </span>
                         <span className="material-symbols-outlined text-3xl text-secondary select-none">
-                            touch_app
+                            gamepad
                         </span>
                         <div>
                             <h3 className="font-headline-lg-mobile text-lg font-black uppercase leading-tight text-on-surface">
-                                Tap to hop forward
+                                Move in all 4 directions
                             </h3>
-                            <p className="mt-0.5 font-body-md text-xs font-semibold text-on-surface-variant">
-                                Keep moving and build your combo.
+                            <p className="mt-1 font-body-md text-xs font-semibold leading-snug text-on-surface-variant">
+                                Use ↑ ↓ ← → to move forward, backward, left, and right.
+                            </p>
+                            <p className="mt-1 text-right font-body-md text-sm font-bold leading-snug text-on-surface" dir="rtl" lang="ar">
+                                استخدم أزرار ↑ ↓ ← → للتحرّك إلى الأمام والخلف واليمين واليسار.
                             </p>
                         </div>
                     </div>
 
                     <div className="mx-4 border-t-2 border-dashed border-outline-variant" />
 
-                    <div className="grid grid-cols-[42px_48px_1fr] items-center gap-3 px-4 py-4">
+                    <div className="grid grid-cols-[34px_42px_1fr] items-start gap-3 px-4 py-4">
                         <span className="font-headline-lg-mobile text-3xl font-black text-tertiary">
                             02
                         </span>
                         <span className="material-symbols-outlined text-3xl text-tertiary select-none">
-                            swipe
+                            directions_car
                         </span>
                         <div>
                             <h3 className="font-headline-lg-mobile text-lg font-black uppercase leading-tight text-on-surface">
-                                Swipe to change lanes
+                                Watch the traffic
                             </h3>
-                            <p className="mt-0.5 font-body-md text-xs font-semibold text-on-surface-variant">
-                                Move left or right to find a safe path.
+                            <p className="mt-1 font-body-md text-xs font-semibold leading-snug text-on-surface-variant">
+                                Check both directions and cross when there is a safe gap.
+                            </p>
+                            <p className="mt-1 text-right font-body-md text-sm font-bold leading-snug text-on-surface" dir="rtl" lang="ar">
+                                راقب الاتجاهين واعبر عندما تجد فجوة آمنة بين السيارات.
                             </p>
                         </div>
                     </div>
 
                     <div className="mx-4 border-t-2 border-dashed border-outline-variant" />
 
-                    <div className="grid grid-cols-[42px_48px_1fr] items-center gap-3 px-4 py-4">
+                    <div className="grid grid-cols-[34px_42px_1fr] items-start gap-3 px-4 py-4">
                         <span className="font-headline-lg-mobile text-3xl font-black text-primary">
                             03
                         </span>
                         <span className="material-symbols-outlined text-3xl text-primary select-none">
-                            traffic
+                            water
                         </span>
                         <div>
                             <h3 className="font-headline-lg-mobile text-lg font-black uppercase leading-tight text-on-surface">
-                                Read every hazard
+                                Wait for the raft
                             </h3>
-                            <p className="mt-0.5 font-body-md text-xs font-semibold text-on-surface-variant">
-                                Dodge traffic, trains, and water.
+                            <p className="mt-1 font-body-md text-xs font-semibold leading-snug text-on-surface-variant">
+                                You cannot jump over water. Wait, then hop onto the raft.
+                            </p>
+                            <p className="mt-1 text-right font-body-md text-sm font-bold leading-snug text-on-surface" dir="rtl" lang="ar">
+                                لا يمكنك القفز فوق الماء. انتظر الطوف ثم اقفز عليه.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div className="mx-4 border-t-2 border-dashed border-outline-variant" />
+
+                    <div className="grid grid-cols-[34px_42px_1fr] items-start gap-3 px-4 py-4">
+                        <span className="font-headline-lg-mobile text-3xl font-black text-red-500">
+                            04
+                        </span>
+                        <span className="material-symbols-outlined select-none text-3xl text-red-500">
+                            train
+                        </span>
+                        <div>
+                            <h3 className="font-headline-lg-mobile text-lg font-black uppercase leading-tight text-on-surface">
+                                Stop for the train
+                            </h3>
+                            <p className="mt-1 font-body-md text-xs font-semibold leading-snug text-on-surface-variant">
+                                Stop at the tracks and wait until the train has passed.
+                            </p>
+                            <p className="mt-1 text-right font-body-md text-sm font-bold leading-snug text-on-surface" dir="rtl" lang="ar">
+                                توقّف عند السكة وانتظر مرور القطار قبل العبور.
                             </p>
                         </div>
                     </div>
@@ -145,10 +175,10 @@ export default function CoachTipsScreen({
             <section className="flex flex-col gap-3">
                 <div className="flex items-end justify-between px-1">
                     <h2 className="font-headline-lg-mobile text-2xl font-black uppercase italic text-on-surface">
-                        Power-ups
+                        Power-ups <span className="text-primary">/ التعزيزات</span>
                     </h2>
                     <span className="font-label-bold text-[10px] uppercase tracking-[0.16em] text-outline">
-                        Collect on the pitch
+                        Collect while playing<br /><span lang="ar" dir="rtl">اجمعها أثناء اللعب</span>
                     </span>
                 </div>
 
@@ -163,7 +193,7 @@ export default function CoachTipsScreen({
                             </span>
                         </div>
                         <p className="font-headline-lg-mobile text-xs font-black uppercase">
-                            Double score
+                            Double score<br /><span lang="ar" dir="rtl">نقاط مضاعفة</span>
                         </p>
                     </div>
 
@@ -172,7 +202,7 @@ export default function CoachTipsScreen({
                             shield
                         </span>
                         <p className="font-headline-lg-mobile text-xs font-black uppercase">
-                            Safe shield
+                            Safe shield<br /><span lang="ar" dir="rtl">درع حماية</span>
                         </p>
                     </div>
 
@@ -181,7 +211,7 @@ export default function CoachTipsScreen({
                             timer
                         </span>
                         <p className="font-headline-lg-mobile text-xs font-black uppercase">
-                            Slow traffic
+                            Slow traffic<br /><span lang="ar" dir="rtl">إبطاء السيارات</span>
                         </p>
                     </div>
                 </div>
@@ -192,7 +222,7 @@ export default function CoachTipsScreen({
                 onClick={onPlay}
                 className="bg-primary-container hover:bg-orange-500 text-white py-5 rounded-xl sticker-border hard-shadow-lg font-headline-lg-mobile text-2xl uppercase italic hover:scale-[1.02] active:translate-y-1 active:shadow-none transition-all mt-4 cursor-pointer text-center flex items-center justify-center gap-2 shadow-[4px_4px_0_0_#1c1b1b]"
             >
-                <span>GOT IT! LET&apos;S PLAY</span>
+                <span>GOT IT! LET&apos;S PLAY <span className="block text-base not-italic" lang="ar" dir="rtl">فهمت، لنبدأ اللعب!</span></span>
                 <span className="material-symbols-outlined select-none text-2xl">directions_run</span>
             </button>
         </div>

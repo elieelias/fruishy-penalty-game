@@ -74,6 +74,25 @@ function PowerUpIcon({ type }: { type: PowerUpType }) {
   );
 }
 
+function MoveArrow({ direction }: { direction: 'up' | 'down' | 'left' | 'right' }) {
+  const rotation = {
+    up: '',
+    right: 'rotate-90',
+    down: 'rotate-180',
+    left: '-rotate-90',
+  }[direction];
+
+  return (
+    <svg
+      aria-hidden="true"
+      className={`h-8 w-8 fill-current ${rotation}`}
+      viewBox="0 0 24 24"
+    >
+      <path d="M12 3 4.5 11h4.25v10h6.5V11h4.25L12 3Z" />
+    </svg>
+  );
+}
+
 export default function ChickenRoadGame({
   country,
   onGameFinished,
@@ -1748,7 +1767,7 @@ export default function ChickenRoadGame({
       {showControls && !dead && (
         <div
           aria-label="Movement controls"
-          className="absolute bottom-[max(1rem,env(safe-area-inset-bottom))] left-1/2 z-20 flex -translate-x-1/2 flex-col items-center gap-1.5 rounded-2xl border border-white/20 bg-black/40 p-3 shadow-2xl backdrop-blur-md"
+          className="pointer-events-none absolute inset-x-0 bottom-[max(1rem,env(safe-area-inset-bottom))] z-20 h-32"
           role="group"
         >
           <button
@@ -1756,43 +1775,41 @@ export default function ChickenRoadGame({
             onPointerDown={(event) => event.stopPropagation()}
             onPointerUp={(event) => event.stopPropagation()}
             onClick={() => move('forward')}
-            className="flex h-14 w-14 cursor-pointer touch-manipulation items-center justify-center rounded-xl border border-white/20 bg-white/20 text-white shadow-md transition-all hover:bg-white/30 active:scale-95 active:bg-white/40"
+            className="pointer-events-auto absolute bottom-16 left-1/2 flex h-12 w-12 -translate-x-1/2 cursor-pointer touch-manipulation items-center justify-center rounded-full border border-white/15 bg-black/20 text-white/80 shadow-lg backdrop-blur-sm transition-all hover:bg-black/30 active:scale-95 active:bg-black/40"
             aria-label="Move Forward"
           >
-            <span className="material-symbols-outlined select-none text-3xl">arrow_upward</span>
+            <MoveArrow direction="up" />
           </button>
-          <div className="flex gap-2.5">
-            <button
-              type="button"
-              onPointerDown={(event) => event.stopPropagation()}
-              onPointerUp={(event) => event.stopPropagation()}
-              onClick={() => move('left')}
-              className="flex h-14 w-14 cursor-pointer touch-manipulation items-center justify-center rounded-xl border border-white/20 bg-white/20 text-white shadow-md transition-all hover:bg-white/30 active:scale-95 active:bg-white/40"
-              aria-label="Move Left"
-            >
-              <span className="material-symbols-outlined select-none text-3xl">arrow_back</span>
-            </button>
-            <button
-              type="button"
-              onPointerDown={(event) => event.stopPropagation()}
-              onPointerUp={(event) => event.stopPropagation()}
-              onClick={() => move('backward')}
-              className="flex h-14 w-14 cursor-pointer touch-manipulation items-center justify-center rounded-xl border border-white/20 bg-white/20 text-white shadow-md transition-all hover:bg-white/30 active:scale-95 active:bg-white/40"
-              aria-label="Move Backward"
-            >
-              <span className="material-symbols-outlined select-none text-3xl">arrow_downward</span>
-            </button>
-            <button
-              type="button"
-              onPointerDown={(event) => event.stopPropagation()}
-              onPointerUp={(event) => event.stopPropagation()}
-              onClick={() => move('right')}
-              className="flex h-14 w-14 cursor-pointer touch-manipulation items-center justify-center rounded-xl border border-white/20 bg-white/20 text-white shadow-md transition-all hover:bg-white/30 active:scale-95 active:bg-white/40"
-              aria-label="Move Right"
-            >
-              <span className="material-symbols-outlined select-none text-3xl">arrow_forward</span>
-            </button>
-          </div>
+          <button
+            type="button"
+            onPointerDown={(event) => event.stopPropagation()}
+            onPointerUp={(event) => event.stopPropagation()}
+            onClick={() => move('backward')}
+            className="pointer-events-auto absolute bottom-0 left-1/2 flex h-12 w-12 -translate-x-1/2 cursor-pointer touch-manipulation items-center justify-center rounded-full border border-white/15 bg-black/20 text-white/80 shadow-lg backdrop-blur-sm transition-all hover:bg-black/30 active:scale-95 active:bg-black/40"
+            aria-label="Move Backward"
+          >
+            <MoveArrow direction="down" />
+          </button>
+          <button
+            type="button"
+            onPointerDown={(event) => event.stopPropagation()}
+            onPointerUp={(event) => event.stopPropagation()}
+            onClick={() => move('left')}
+            className="pointer-events-auto absolute bottom-1 left-5 flex h-16 w-16 cursor-pointer touch-manipulation items-center justify-center rounded-full border border-white/15 bg-black/20 text-white/80 shadow-lg backdrop-blur-sm transition-all hover:bg-black/30 active:scale-95 active:bg-black/40 sm:left-8"
+            aria-label="Move Left"
+          >
+            <MoveArrow direction="left" />
+          </button>
+          <button
+            type="button"
+            onPointerDown={(event) => event.stopPropagation()}
+            onPointerUp={(event) => event.stopPropagation()}
+            onClick={() => move('right')}
+            className="pointer-events-auto absolute bottom-1 right-5 flex h-16 w-16 cursor-pointer touch-manipulation items-center justify-center rounded-full border border-white/15 bg-black/20 text-white/80 shadow-lg backdrop-blur-sm transition-all hover:bg-black/30 active:scale-95 active:bg-black/40 sm:right-8"
+            aria-label="Move Right"
+          >
+            <MoveArrow direction="right" />
+          </button>
         </div>
       )}
     </div>
