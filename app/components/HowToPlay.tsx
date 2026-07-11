@@ -1,54 +1,21 @@
 'use client'
 
 import React from "react";
-import Image from "next/image";
 import type { LeaderboardEntry } from "../types";
 
 interface CoachTipsScreenProps {
     onPlay: () => void;
-    playerName: string;
     topPlayer: LeaderboardEntry | null;
-    showRoadGuide?: boolean;
 }
 
 export default function CoachTipsScreen({
     onPlay,
-    playerName,
     topPlayer,
-    showRoadGuide = true,
 }: CoachTipsScreenProps) {
     return (
         <div className="flex-grow pt-8 pb-32 px-4 flex flex-col gap-8 max-w-[600px] mx-auto w-full relative z-10">
-            {showRoadGuide && (
-                <section className="flex flex-col gap-4">
-                    <h2 className="font-headline-lg-mobile text-3xl uppercase italic text-primary select-none drop-shadow-sm">
-                        Road Guide
-                    </h2>
-                    <div className="flex items-end gap-2">
-                        <div className="w-28 h-36 md:w-32 md:h-40 flex-shrink-0 sticker-border rounded-xl bg-primary-container overflow-hidden hard-shadow">
-                            <Image
-                                alt="Road guide chicken"
-                                className="w-full h-full object-cover"
-                                src="/game-assets/road-guide.webp"
-                                width={128}
-                                height={160}
-                            />
-                        </div>
-                        <div className="relative bg-white sticker-border rounded-2xl p-4 hard-shadow mb-4 flex-grow">
-                            <p className="font-label-bold text-[13px] md:text-sm uppercase text-on-surface leading-tight select-none">
-                                &ldquo;READY, {playerName || "CROSSER"}? KEEP MOVING, WATCH EVERY LANE, AND USE SAFE GRASS TO PLAN YOUR NEXT HOP!&rdquo;
-                            </p>
-                            <div className="absolute -left-2 bottom-4 w-4 h-4 bg-white border-l-4 border-b-4 border-on-background rotate-45"></div>
-                        </div>
-                    </div>
-                </section>
-            )}
-
             {topPlayer && (
                 <section className="relative overflow-hidden rounded-xl sticker-border bg-inverse-surface px-5 py-4 hard-shadow-lg text-white">
-                    <div className="absolute -right-2 -top-4 rotate-12 text-white/5">
-                        <span aria-hidden="true" className="text-[52px]">🏆</span>
-                    </div>
                     <div className="relative flex items-center gap-4">
                         <div className="flex h-14 w-14 flex-shrink-0 -rotate-3 items-center justify-center rounded-lg border-3 border-white bg-tertiary-fixed font-headline-lg-mobile text-2xl font-black text-on-tertiary-fixed">
                             #1

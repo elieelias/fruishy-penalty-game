@@ -20,8 +20,7 @@ const ChickenRoadGame = dynamic(() => import("./PenaltyGame"), {
   ),
 });
 
-export default function GameApp({ token, testFlow = false }: { token: string; testFlow?: boolean }) {
-  const useNewFlow = testFlow;
+export default function GameApp({ token }: { token: string }) {
   const [screen, setScreen] = useState<AppScreen>(AppScreen.REGISTRATION);
   const [player, setPlayer] = useState<Player>({
     name: "",
@@ -133,9 +132,7 @@ export default function GameApp({ token, testFlow = false }: { token: string; te
         )}
         {screen === AppScreen.COACH_TIPS && (
           <CoachTipsScreen
-            playerName={player.name}
             topPlayer={topDailyPlayer}
-            showRoadGuide={!useNewFlow}
             onPlay={() => setScreen(AppScreen.GAMEPLAY)}
           />
         )}

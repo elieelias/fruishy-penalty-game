@@ -27,7 +27,5 @@ export default async function PlayPage({
     return <GameUnavailable />;
   }
 
-  const testFlow = query.test === "true";
-
-  return isAvailable ? <GameApp token={token} testFlow={testFlow} /> : <QrScanned />;
+  return isAvailable ? <GameApp token={token} /> : <QrScanned />;
 }
