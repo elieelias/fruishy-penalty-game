@@ -46,8 +46,8 @@ export default function CoachTipsScreen({
 
             {topPlayer && (
                 <section className="relative overflow-hidden rounded-xl sticker-border bg-inverse-surface px-5 py-4 hard-shadow-lg text-white">
-                    <div className="absolute -right-5 -top-7 rotate-12 text-[88px] text-white/5">
-                        <span aria-hidden="true" className="text-[72px]">🏆</span>
+                    <div className="absolute -right-2 -top-4 rotate-12 text-white/5">
+                        <span aria-hidden="true" className="text-[52px]">🏆</span>
                     </div>
                     <div className="relative flex items-center gap-4">
                         <div className="flex h-14 w-14 flex-shrink-0 -rotate-3 items-center justify-center rounded-lg border-3 border-white bg-tertiary-fixed font-headline-lg-mobile text-2xl font-black text-on-tertiary-fixed">
