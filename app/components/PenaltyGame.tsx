@@ -112,7 +112,9 @@ export default function ChickenRoadGame({
   const lanesPassedRef = useRef(0);
   const startedAtRef = useRef(0);
   const roadTimeRef = useRef(0);
-  const hazardRewardRef = useRef({ laneId: -1, seconds: 0 });
+  const hazardRewardRef = useRef({ laneId: -1, seconds: 0, eligible: false });
+  const visitedLaneIdsRef = useRef<Set<number>>(new Set());
+  const nearMissRewardedLaneIdsRef = useRef<Set<number>>(new Set());
   const bonusScoreRef = useRef(0);
   const lastBaseScoreRef = useRef(0);
   const powerUpUntilRef = useRef<Record<PowerUpType, number>>({
@@ -542,6 +544,9 @@ export default function ChickenRoadGame({
     state.combo = 0;
     state.particles = [];
     state.shake = 0;
+    hazardRewardRef.current = { laneId: -1, seconds: 0, eligible: false };
+    visitedLaneIdsRef.current.clear();
+    nearMissRewardedLaneIdsRef.current.clear();
     sectionRef.current = {
       kind: 'grass',
       remaining: 1,
@@ -958,10 +963,17 @@ export default function ChickenRoadGame({
           Math.abs(currentLane.y - state.playerY) <= LANE_HEIGHT / 2;
 
         if (currentLane && currentLane.id !== hazardRewardRef.current.laneId) {
-          hazardRewardRef.current = { laneId: currentLane.id, seconds: 0 };
+          const isFirstVisit = !visitedLaneIdsRef.current.has(currentLane.id);
+          visitedLaneIdsRef.current.add(currentLane.id);
+          hazardRewardRef.current = {
+            laneId: currentLane.id,
+            seconds: 0,
+            eligible: isFirstVisit,
+          };
         }
         if (
           isInHazardLane &&
+          hazardRewardRef.current.eligible &&
           hazardRewardRef.current.seconds < 2
         ) {
           const rewardedTime = Math.min(
@@ -1486,7 +1498,8 @@ export default function ChickenRoadGame({
             } else if (
               !ghostActive &&
               Math.abs(state.playerY - lane.y) < 18 &&
-              time > nearMissCooldownRef.current
+              time > nearMissCooldownRef.current &&
+              !nearMissRewardedLaneIdsRef.current.has(lane.id)
             ) {
               const horizontalGap =
                 state.playerX < carX
@@ -1494,6 +1507,7 @@ export default function ChickenRoadGame({
                   : state.playerX - playerHalf - (carX + car.width);
               if (horizontalGap >= 0 && horizontalGap < 13) {
                 nearMissCooldownRef.current = time + 1200;
+                nearMissRewardedLaneIdsRef.current.add(lane.id);
                 bonusScoreRef.current += 25;
               }
             }
