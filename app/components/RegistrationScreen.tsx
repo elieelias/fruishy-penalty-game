@@ -186,10 +186,10 @@ export default function RegistrationScreen({
                         Sponsored By:
                     </p>
                 </div>
-                <div className="sponsor-marquee flex w-max items-center gap-2 px-2">
+                <div className="sponsor-marquee flex w-max items-center gap-3 px-3">
                     {[...SPONSORS, ...SPONSORS].map((sponsor, index) => (
                         <div
-                            className="flex h-14 w-16 shrink-0 items-center justify-center rounded-md border-2 border-on-background bg-surface-container-low p-1"
+                            className="flex h-16 w-24 shrink-0 items-center justify-center"
                             key={`${sponsor.name}-${index}`}
                         >
                             <Image
@@ -197,7 +197,7 @@ export default function RegistrationScreen({
                                 className="h-full w-full object-contain"
                                 height={64}
                                 src={sponsor.logo}
-                                width={64}
+                                width={96}
                             />
                         </div>
                     ))}
