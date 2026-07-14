@@ -6,5 +6,13 @@ export default function QrScannedPreviewPage() {
     notFound();
   }
 
-  return <QrScanned />;
+  return (
+    <QrScanned
+      initialTopPlayer={{
+        rank: 1,
+        name: "Maya",
+        points: 12850,
+      }}
+    />
+  );
 }
