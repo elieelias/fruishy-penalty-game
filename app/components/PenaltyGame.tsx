@@ -1336,7 +1336,6 @@ export default function ChickenRoadGame({
                 state.targetX += carriedDistance;
                 state.playerColumn = nearestColumn(state.targetX, state.width);
                 if (
-                  !ghostActive &&
                   (state.playerX < -24 || state.playerX > state.width + 24)
                 ) {
                   finishGame();
@@ -1515,7 +1514,6 @@ export default function ChickenRoadGame({
 
           if (
             !deadRef.current &&
-            !ghostActive &&
             lane.kind === 'river' &&
             Math.abs(state.playerY - lane.y) < 17 &&
             !supportedByLog
