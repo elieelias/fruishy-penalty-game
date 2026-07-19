@@ -72,6 +72,18 @@ export default function RegistrationScreen({
                 </div>
             </div>
 
+            <section className="w-full -rotate-1 rounded-xl sticker-border bg-tertiary-fixed px-4 py-3 text-center hard-shadow">
+                <p className="font-label-bold text-[10px] uppercase tracking-[0.18em] text-on-tertiary-fixed-variant">
+                    Today&apos;s top score wins
+                </p>
+                <p className="mt-0.5 font-headline-lg-mobile text-3xl font-black uppercase leading-none text-on-tertiary-fixed">
+                    $50 Cash Prize
+                </p>
+                <p className="mt-1 font-body-md text-xs font-bold text-on-tertiary-fixed-variant">
+                    Keep climbing — the leaderboard closes at 2:00 AM.
+                </p>
+            </section>
+
 
             {/* Registration Card */}
             <div className="bg-surface w-full rounded-xl sticker-border hard-shadow p-4 md:p-5 flex flex-col gap-4 relative overflow-hidden">
